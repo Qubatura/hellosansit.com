@@ -31,7 +31,7 @@
   #ambient { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
   #ambient i { position:absolute; display:block; border-radius:50%; will-change:transform; }
 
-  header, #hero, #emotions, footer { position:relative; z-index:1; }
+  header, #hero, #about, footer { position:relative; z-index:1; }
 
   /* ————— HEADER ————— */
   header {
@@ -47,7 +47,8 @@
   }
   header img { height:52px; margin:-8px 0; display:block; }
   header .right { display:flex; gap:18px; align-items:center; font-size:13px; font-weight:700; color:var(--ink-soft); letter-spacing:.5px; }
-  header .right span { cursor:pointer; }
+  header .right span, header .right a { cursor:pointer; color:var(--ink-soft); text-decoration:none; transition:color .15s ease; }
+  header .right span:hover, header .right a:hover { color:var(--violet); }
   header .cta-mini {
     background:var(--violet); color:#fff; padding:8px 18px; border-radius:999px;
     font-weight:800; font-size:13px;
@@ -80,6 +81,14 @@
     transition:transform .15s ease, box-shadow .15s ease;
   }
   .cta:hover { transform:translateY(-2px); box-shadow:0 12px 28px rgba(107,47,217,.45); }
+  /* drugi przycisk hero — ghost; JEDEN pełny fiolet na ekranie = „Get the book" */
+  .cta-ghost {
+    display:inline-block; background:transparent; color:var(--violet); font-weight:800;
+    padding:13px 34px; border-radius:999px; font-size:17px; text-decoration:none;
+    border:2px solid var(--violet); margin-left:14px;
+    transition:transform .15s ease, background .15s ease, color .15s ease;
+  }
+  .cta-ghost:hover { transform:translateY(-2px); background:var(--violet); color:#fff; }
 
   @media (max-width:820px) {
     #hero { flex-direction:column; }
@@ -88,10 +97,43 @@
     #hero-copy p { margin:0 auto 26px; }
   }
 
-  /* ————— EMOCJE ————— */
-  #emotions { padding:40px 0 80px; position:relative; z-index:3; }
-  #emotions h2 { text-align:center; font-weight:900; font-size:clamp(20px,3vw,30px); margin-bottom:6px; }
-  #emotions .sub { text-align:center; color:var(--ink-soft); margin-bottom:28px; font-size:15px; }
+  /* ————— ABOUT — narracja: potrzeba → Sansit → świat emocji → Sandra ————— */
+  #about { padding:90px 24px 40px; }
+  #about .blk { max-width:660px; margin:0 auto 90px; }
+  #about h2 { font-weight:900; font-size:clamp(22px,3vw,34px); letter-spacing:-.5px; margin-bottom:18px; }
+  #about p { color:var(--ink-soft); line-height:1.7; font-size:17px; margin-bottom:16px; }
+  #about .lead { color:var(--ink); font-weight:800; font-size:19px; }
+  .gold { color:#c98a12; font-weight:800; }
+
+  /* Blok 1 — hak: wyśrodkowany, duży oddech */
+  .ab-hook { text-align:center; }
+  .ab-hook h2 { font-size:clamp(24px,3.4vw,40px); }
+
+  /* Blok 2 — poznaj Sansita: postać + tekst */
+  .ab-meet { display:flex; align-items:center; gap:clamp(24px,4vw,56px); max-width:980px !important; }
+  .ab-meet img { width:min(320px,38%); height:auto; flex:none;
+                 filter:drop-shadow(0 18px 30px rgba(90,70,100,.18)); }
+  .ab-meet .callout { color:var(--ink); font-weight:800; font-style:italic; font-size:18px;
+                      border-left:4px solid var(--violet); padding-left:16px; }
+  @media (max-width:720px) {
+    .ab-meet { flex-direction:column; text-align:center; }
+    .ab-meet .callout { border-left:0; padding-left:0; }
+  }
+
+  /* Blok 4 — Sandra: miękka karta */
+  .ab-sandra {
+    background:#fff; border-radius:26px; padding:clamp(28px,4vw,48px);
+    box-shadow:0 14px 40px rgba(90,70,100,.12); position:relative;
+  }
+  .ab-sandra::before {
+    content:'❝'; position:absolute; top:-6px; left:26px;
+    font-size:64px; color:var(--violet); opacity:.25; line-height:1;
+  }
+
+  /* ————— EMOCJE (Blok 3 wewnątrz About) ————— */
+  #emotions { padding:0 0 90px; position:relative; z-index:3; }
+  #emotions .blk-head { max-width:660px; margin:0 auto; padding:0 24px; text-align:center; }
+  #emotions .sub { color:var(--ink-soft); margin-bottom:28px; font-size:15px; }
   #strip {
     display:flex; gap:18px; overflow-x:auto; padding:10px max(24px, calc(50vw - 570px)) 26px;
     scroll-snap-type:x mandatory; scrollbar-width:thin;
@@ -111,6 +153,15 @@
     text-align:center; color:var(--ink-soft); font-size:13px; padding:26px 0 40px;
     position:relative; z-index:3;
   }
+
+  /* toast „coming soon" (Sansit Song) */
+  #toast {
+    position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(16px);
+    background:#2b2536; color:#F0EFFF; font-weight:700; font-size:14px;
+    padding:12px 22px; border-radius:999px; box-shadow:0 10px 30px rgba(0,0,0,.25);
+    opacity:0; pointer-events:none; transition:opacity .3s ease, transform .3s ease; z-index:60;
+  }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
@@ -120,8 +171,9 @@
 <header>
   <img src="logo/LOGO_header.png" alt="SANSIT">
   <div class="right">
+    <a href="#about">About</a>
+    <span id="songBtn">♪&nbsp;Sansit&nbsp;Song</span>
     <span>EN&nbsp;|&nbsp;PL</span>
-    <span>♪</span>
     <span class="cta-mini">Get the book</span>
   </div>
 </header>
@@ -139,17 +191,52 @@
   <div id="hero-copy">
     <h1>Meet Sansit — feelings have colors!</h1>
     <p>A little visitor from far away who is just learning what emotions are — exactly like your child.</p>
-    <a class="cta" href="#">Get the book</a>
+    <a class="cta" href="#">Get the book</a><a class="cta-ghost" href="#about">Meet Sansit&nbsp;↓</a>
   </div>
 </div>
 
-<section id="emotions">
-  <h2>Joy is just the beginning.</h2>
-  <div class="sub">Every feeling has its own color, its own story, its own lesson.</div>
-  <div id="strip"></div>
+<!-- ————— ABOUT — teksty PL robocze (brief v1.0); EN po akceptacji Sandry ————— -->
+<section id="about">
+
+  <!-- BLOK 1 — hak: rodzic i potrzeba -->
+  <div class="blk ab-hook">
+    <h2>Zanim dziecko nauczy się nazywać emocje — już je czuje.</h2>
+    <p>Radość, złość, smutek, ciekawość. Małe dziecko przeżywa je z ogromną siłą, często zanim znajdzie na nie słowa. A my, dorośli, nie zawsze wiemy, jak mu pomóc je zrozumieć.</p>
+    <p class="lead">Sansit powstał właśnie po to.</p>
+  </div>
+
+  <!-- BLOK 2 — Sansit jako odpowiedź -->
+  <div class="blk ab-meet">
+    <img src="character/sansit_about.webp" alt="Sansit" loading="lazy">
+    <div>
+      <h2>Poznaj Sansita.</h2>
+      <p>Sansit to mały przybysz z bardzo daleka, który dopiero uczy się, czym są emocje — zupełnie jak Twoje dziecko. Kiedy coś czuje, jego czułki i kamień w plecaku zmieniają kolor. <span class="gold">Radość świeci złotem.</span> Każda emocja ma swój odcień.</p>
+      <p>Dzięki temu dziecko <strong>widzi</strong> emocję, zanim ktokolwiek ją nazwie. Uczy się ją rozpoznawać tak, jak dzieci uczą się najlepiej — przez kolor, zabawę i wspólną historię, a nie przez tłumaczenie.</p>
+      <p class="callout">Sansit nie wykłada. Sansit czuje razem z dzieckiem.</p>
+    </div>
+  </div>
+
+  <!-- BLOK 3 — świat emocji (galeria) -->
+  <div id="emotions">
+    <div class="blk-head">
+      <h2>Radość to dopiero początek.</h2>
+      <div class="sub">Pierwsza książka — <em>Sansit: Joy</em> — opowiada o radości. Ale Sansit dopiero zaczyna swoją podróż przez świat uczuć. Przed nim jeszcze ciekawość, smutek, złość i wiele innych emocji — każda ze swoim kolorem, swoją historią i swoją lekcją.</div>
+    </div>
+    <div id="strip"></div>
+  </div>
+
+  <!-- BLOK 4 — Sandra + geneza -->
+  <div class="blk ab-sandra">
+    <h2>Skąd wziął się Sansit.</h2>
+    <p>Za Sansitem stoi Sandra — psycholożka, która na co dzień pomaga dzieciom oswajać emocje. To z rozmów z nią narodził się pomysł, żeby zrobić z tego coś, co dziecko może wziąć do ręki, pokolorować i poczuć.</p>
+    <p>Sandra czuwała nad każdą sceną, każdą emocją i każdym słowem — tak, żeby Sansit nie tylko bawił, ale i naprawdę pomagał. A jej ślad jest nawet w samym imieniu Sansita.</p>
+    <p class="lead">Bo najlepsze historie dla dzieci rodzą się tam, gdzie spotyka się serce i wiedza.</p>
+  </div>
+
 </section>
 
 <footer>Sansit™ · hellosansit.com</footer>
+<div id="toast">🎵 Sansit's song is coming soon!</div>
 
 <script>
 // ————— Sklejka intro → loop —————
@@ -281,6 +368,15 @@ hero.addEventListener('mousemove', e => {
                ((e.clientY - r.top) / r.height * 100).toFixed(1));
     raf = null;
   });
+});
+
+// ————— Sansit Song — placeholder do czasu piosenki (osobny utwór, nie main-theme) —————
+const toast = document.getElementById('toast');
+let toastT = null;
+document.getElementById('songBtn').addEventListener('click', () => {
+  toast.classList.add('show');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => toast.classList.remove('show'), 2600);
 });
 
 // ————— Galeria emocji (wybór 2026-07-16) —————
