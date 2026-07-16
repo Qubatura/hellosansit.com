@@ -4,6 +4,12 @@
 Strona serii kolorowanek **Sansit** (Amazon KDP) — marka osobna, NIE dywizja Qubatura.
 Bohater: Sansit, mały przybysz z daleka, uczy się emocji jak dziecko. Motyw: „feelings have colors".
 
+## Repo i podgląd
+- GitHub (publiczne!): `Qubatura/hellosansit.com`, branch `main`
+- GitHub Pages: https://qubatura.github.io/hellosansit.com/ — deploy = push na main
+- Repo publiczne → NIC z zaplecza do repo; `_DOCS/`, `_tools/`, `_work/` są w .gitignore
+- `index.html` w korzeniu = produkcja; warsztat i playgroundy w `_tools/`
+
 ## Stan projektu
 Postępy → najnowszy `SESSION-<data>.md` w tym folderze. Tu tylko rzeczy stałe.
 Wymagania → `_DOCS/SANSIT_WEBSITE_PRD_v2.md` + `_DOCS/SANSIT_ABOUT_brief.md`.
