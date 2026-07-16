@@ -8,3 +8,6 @@ _tools/
 
 # Pliki robocze / pośrednie (klatki wideo itp.)
 _work/
+
+# Zaplecze — repo jest PUBLICZNE (GitHub Pages), PRD/briefy zostają lokalnie
+_DOCS/
