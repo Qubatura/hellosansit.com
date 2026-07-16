@@ -244,9 +244,12 @@ const iv = document.getElementById('introv');
 const lv = document.getElementById('loopv');
 
 // ————— Alpha video (VP9 webm) — postać wycięta, tło robi CSS —————
-// Safari nie gra VP9-alpha → zostaje baked mp4 (docelowo HEVC-alpha z Maca).
+// UWAGA (07-16): Safari/iOS ODTWARZA VP9 webm, ale IGNORUJE kanał alpha → czarne tło
+// z przebłyskami. canPlayType nie wystarczy — wykluczamy cały WebKit po vendorze Apple
+// (na iOS każda przeglądarka to WebKit). Docelowo: HEVC-alpha z Maca.
 let usingAlpha = false;
-if (document.createElement('video').canPlayType('video/webm; codecs="vp9"') !== '') {
+const appleWebKit = /apple/i.test(navigator.vendor || '');
+if (!appleWebKit && document.createElement('video').canPlayType('video/webm; codecs="vp9"') !== '') {
   usingAlpha = true;
   iv.src = 'video/intro_alpha.webm';
   lv.src = 'video/loop_alpha.webm';
