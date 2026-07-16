@@ -32,3 +32,6 @@ Wymagania → `_DOCS/SANSIT_WEBSITE_PRD_v2.md` + `_DOCS/SANSIT_ABOUT_brief.md`.
 - `_tools/bake_variant.py <clip> <hex> <out.mp4>` — szybki wariant koloru z cache w `_work/`
 - Zasady: cień z strefy stóp + mediana krocząca (bbox jeździ!); eksport bt709 tv-range,
   a strona i tak sampluje tło z rogu wideo (canvas) — zero szarej ramki
+- ⚠️ **Safari/iOS gra VP9 webm, ale IGNORUJE kanał alpha** (czarne tło z przebłyskami)
+  — `canPlayType` NIE wykrywa tego; wykluczać WebKit po `/apple/i.test(navigator.vendor)`
+  (na iOS każda przeglądarka = WebKit) → mp4 fallback. Docelowo HEVC-alpha z Maca.
