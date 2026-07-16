@@ -1,0 +1,10 @@
+# System
+desktop.ini
+Thumbs.db
+.DS_Store
+
+# Narzędzia lokalne (Real-ESRGAN itp.) — nie wersjonujemy
+_tools/
+
+# Pliki robocze / pośrednie (klatki wideo itp.)
+_work/
