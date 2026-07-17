@@ -32,6 +32,7 @@
 
   /* ————— ŻYWA PERŁA — rój plam + refleks (nastawy Kuby z playgroundu, 07-16) ————— */
   #ambient { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
+  /* opacity #ambient sterowane scrollem w JS — pełna moc w hero, cisza pod tekstem */
   #ambient i { position:absolute; display:block; border-radius:50%; will-change:transform; }
 
   /* #hero CELOWO bez z-index (żadnego stacking contextu) — dzięki temu #vwrap (Sansit)
@@ -167,7 +168,8 @@
   /* Blok 4 — Sandra: miękka karta */
   .ab-sandra {
     background:#fff; border-radius:26px; padding:clamp(28px,4vw,48px);
-    box-shadow:0 14px 40px rgba(90,70,100,.12); position:relative;
+    box-shadow:0 22px 60px rgba(74,31,160,.16), 0 4px 14px rgba(90,70,100,.10);
+    position:relative;
   }
   .ab-sandra::before {
     content:'❝'; position:absolute; top:-6px; left:26px;
@@ -177,10 +179,18 @@
   /* ————— EMOCJE (Blok 3 wewnątrz About) ————— */
   #emotions { padding:0 0 90px; position:relative; z-index:3; }
   #emotions .blk-head { max-width:660px; margin:0 auto; padding:0 24px; text-align:center; }
-  #emotions .sub { color:var(--ink-soft); margin-bottom:28px; font-size:15px; }
+  #emotions .sub { color:var(--ink-soft); margin-bottom:12px; font-size:15px; }
+  /* podpowiedź, że pasek się PRZEWIJA (recenzja 07-17: ucięta karta wyglądała jak błąd) */
+  #emotions .scroll-hint {
+    text-align:center; color:var(--ink-soft); font-size:12.5px; font-weight:700;
+    letter-spacing:.4px; margin-bottom:16px; opacity:.75;
+  }
   #strip {
     display:flex; gap:18px; overflow-x:auto; padding:10px max(24px, calc(50vw - 570px)) 26px;
     scroll-snap-type:x mandatory; scrollbar-width:thin;
+    /* karty przy krawędziach wygasają → jasny sygnał „jest więcej w bok", nie ucięcie */
+    -webkit-mask-image:linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+            mask-image:linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
   }
   .card {
     flex:0 0 210px; scroll-snap-align:center;
@@ -275,6 +285,7 @@
       <h2 data-i18n="ab3H"></h2>
       <div class="sub" data-i18n="ab3P"></div>
     </div>
+    <div class="scroll-hint" data-i18n="stripHint"></div>
     <div id="strip"></div>
   </div>
 
@@ -373,9 +384,21 @@ function sampleBg(v) {
 iv.addEventListener('playing', () => { if (!usingAlpha) sampleBg(iv); });
 lv.addEventListener('playing', () => { if (!usingAlpha) sampleBg(lv); });
 
-// ————— Header: tło dopiero po scrollu —————
+// ————— Header: tło dopiero po scrollu + wyciszenie perły pod tekstem —————
+// (recenzja 07-17: ruchome tło za długim body copy męczy oko → pełna moc w hero,
+//  ~40% w sekcjach tekstowych; płynne przejście przez pierwszy ekran scrolla)
 const hdr = document.querySelector('header');
-addEventListener('scroll', () => hdr.classList.toggle('scrolled', scrollY > 24), { passive:true });
+const ambEl = document.getElementById('ambient');
+const glowEl = document.getElementById('glow');
+function onScroll() {
+  hdr.classList.toggle('scrolled', scrollY > 24);
+  const t = Math.min(1, scrollY / innerHeight);   // 0 = hero, 1 = zjechany ekran
+  const dim = 1 - t * 0.6;                         // 1 → 0.4
+  ambEl.style.opacity = dim;
+  glowEl.style.opacity = 0.55 - t * 0.3;           // glow też ciszej nad tekstem (0.55 → 0.25)
+}
+addEventListener('scroll', onScroll, { passive:true });
+onScroll();
 
 // ————— ŻYWA PERŁA — rój plam (nastawy ze strojenia Kuby, 07-16) —————
 // 10 plam × 49vmax, intensywność 150% (alfy .30/.225/.24), tempo 225%;
@@ -454,6 +477,7 @@ const I18N = {
   en: {
     navAbout:'About', cta:'Get the book', ctaGhost:'Meet Sansit&nbsp;↓', song:'Sansit Song',
     toast:'🎵 Sansit’s song is coming soon!',
+    stripHint:'← swipe through the emotions →',
     heroH1:'Meet Sansit — feelings have colors!',
     heroP:'A little visitor from far away who is just learning what emotions are — exactly like your child.',
     ab1H:'Before a child can name emotions — they already feel them.',
@@ -473,6 +497,7 @@ const I18N = {
   pl: {
     navAbout:'O Sansicie', cta:'Kup książkę', ctaGhost:'Poznaj Sansita&nbsp;↓', song:'Piosenka Sansita',
     toast:'🎵 Piosenka Sansita — już wkrótce!',
+    stripHint:'← przewiń przez emocje →',
     heroH1:'Poznaj Sansita — emocje mają kolory!',
     heroP:'Mały przybysz z bardzo daleka, który dopiero uczy się, czym są emocje — zupełnie jak Twoje dziecko.',
     ab1H:'Zanim dziecko nauczy się nazywać emocje — już je czuje.',
