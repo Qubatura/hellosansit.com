@@ -400,10 +400,12 @@ iv.addEventListener('error', () => {
   iv.play();
 });
 
-// TWARDE CIĘCIE na 'ended' (fix 07-16 w.3): crossfade z wyprzedzeniem 0.45s przesuwał
-// loop o ~11 klatek względem końca intro → „drop". Pozy intro-koniec/loop-start są
-// zgodne (rotacja od kl. 0019), więc cięcie 1:1 jest niewidoczne.
-iv.style.transition = lv.style.transition = 'none';
+// CROSSFADE na 'ended' (fix 07-17). ZMIERZONE: końcowa poza intro NIE ISTNIEJE w loopie
+// (sufit dopasowania dowolnej klatki loopa do końca intro = ~3,9% pikseli; przesunięcie
+// dx/dy nie pomaga → to inna faza animacji, nie offset renderu). Twarde cięcie ZAWSZE
+// pokazywało ten ~4% skok na całym obrysie = „drop". Jedyne co chowa różnicę dwóch póz to
+// rozpłynięcie opacity. Poprzedni crossfade miał wyprzedzenie 0.45s (desync 11 kl.) — tu
+// BEZ wyprzedzenia: intro zamarza na ostatniej klatce, loop wchodzi miękko od zera.
 let warmed = false;
 iv.addEventListener('timeupdate', () => {
   if (!warmed && iv.duration - iv.currentTime < 0.8) {
@@ -412,19 +414,19 @@ iv.addEventListener('timeupdate', () => {
   }
 });
 iv.addEventListener('ended', () => {
-  // intro po 'ended' trzyma ostatnią klatkę — podmieniamy opacity dopiero, gdy loop
-  // FAKTYCZNIE wyświetli pierwszą klatkę (rVFC), inaczej 1-2 klatki pustki = „mrugnięcie"
   if (lv.currentTime > 0.05) { try { lv.currentTime = 0; } catch (e) {} }
-  let swapped = false;
-  const swap = () => {
-    if (swapped) return; swapped = true;
+  lv.style.zIndex = 2; iv.style.zIndex = 1;   // loop na wierzchu, rozpływa się nad intro
+  let done = false;
+  const crossfade = () => {                    // odpalane dopiero gdy loop wyświetli 1. klatkę
+    if (done) return; done = true;
+    lv.style.transition = 'opacity .32s ease';
     lv.style.opacity = 1;
-    iv.style.opacity = 0;
+    setTimeout(() => { iv.style.opacity = 0; }, 380);  // intro zdjęte po zakończeniu fade
   };
   const p = lv.play();
-  if (lv.requestVideoFrameCallback) lv.requestVideoFrameCallback(swap);
-  else if (p && p.then) p.then(() => requestAnimationFrame(swap)).catch(swap);
-  else requestAnimationFrame(swap);
+  if (lv.requestVideoFrameCallback) lv.requestVideoFrameCallback(crossfade);
+  else if (p && p.then) p.then(() => requestAnimationFrame(crossfade)).catch(crossfade);
+  else requestAnimationFrame(crossfade);
 });
 
 // ————— Fallback bez alfy: dopasowanie tła strony do wideo (canvas sampling) —————
