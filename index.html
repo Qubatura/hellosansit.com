@@ -31,7 +31,10 @@
   #ambient { position:fixed; inset:0; z-index:0; pointer-events:none; overflow:hidden; }
   #ambient i { position:absolute; display:block; border-radius:50%; will-change:transform; }
 
-  header, #hero, #about, footer { position:relative; z-index:1; }
+  /* #hero CELOWO bez z-index (żadnego stacking contextu) — dzięki temu #vwrap (Sansit)
+     może wyjść PONAD fixed #glow, a reszta hero zostaje pod nim */
+  header, #about, footer { position:relative; z-index:1; }
+  #hero { position:relative; }
 
   /* ————— HEADER ————— */
   header {
@@ -46,8 +49,21 @@
   header.scrolled {
     background:linear-gradient(to bottom, rgba(242,239,234,.96) 45%, rgba(242,239,234,0) 100%);
   }
-  header img { height:52px; margin:-8px 0; display:block; }
-  header .right { display:flex; gap:18px; align-items:center; font-size:13px; font-weight:700; color:var(--ink-soft); letter-spacing:.5px; }
+  .logo-wrap { position:relative; display:block; margin:-10px 0; }
+  header img { height:62px; display:block; }
+  /* pulsująca poświata na KULCE z logo (kulka jest w PNG, nad „i") */
+  #logoPulse {
+    position:absolute; left:72%; top:19%; width:30%; aspect-ratio:1;
+    transform:translate(-50%,-50%); border-radius:50%; pointer-events:none;
+    background:radial-gradient(circle, rgba(224,95,208,.50) 0%, rgba(224,95,208,.16) 45%, transparent 68%);
+    animation:logoPulse 2.6s ease-in-out infinite;
+  }
+  @keyframes logoPulse {
+    0%,100% { transform:translate(-50%,-50%) scale(.75); opacity:.45; }
+    50%     { transform:translate(-50%,-50%) scale(1.25); opacity:1; }
+  }
+  .logo-tm { position:absolute; left:95%; top:30%; font-size:9px; font-weight:800; color:var(--ink-soft); }
+  header .right { display:flex; gap:26px; align-items:center; font-size:13px; font-weight:700; color:var(--ink-soft); letter-spacing:.5px; }
   header .right span, header .right a { cursor:pointer; color:var(--ink-soft); text-decoration:none; transition:color .15s ease; }
   header .right span:hover, header .right a:hover { color:var(--violet); }
   #musicBtn { font-size:17px; }
@@ -60,16 +76,18 @@
   header .right a.cta-mini:hover { color:#fff; filter:brightness(1.12); }
 
   /* ————— HERO — Sansit wbiega zza lewej krawędzi ekranu ————— */
-  #hero { position:relative; display:flex; align-items:center; }
-  #glow { position:absolute; left:0; right:0; bottom:-180px; top:-80px; pointer-events:none; }
-  #glowOver { position:absolute; left:0; right:0; bottom:-180px; top:-80px; pointer-events:none;
-              mix-blend-mode:multiply; opacity:.5; z-index:4; }
+  #hero { display:flex; align-items:center; }
+  /* GLOW NA FRONCIE (07-17): fixed nad CAŁĄ stroną — zero kresek na granicach sekcji.
+     Ponad nim tylko #vwrap (Sansit, z-index:7) i header (z:20). Multiply jak dawny
+     #glowOver; opacity do strojenia z Kubą. */
+  #glow { position:fixed; inset:0; pointer-events:none; z-index:6;
+          mix-blend-mode:multiply; opacity:.55; }
   #halo { position:absolute; z-index:1; pointer-events:none;
           left:12%; top:8%; width:44%; aspect-ratio:1;
           background:radial-gradient(circle, rgba(255,253,246,.85) 0%, rgba(255,250,238,.35) 42%, transparent 68%);
           animation:haloBreath 7s ease-in-out infinite alternate; }
   @keyframes haloBreath { from { transform:scale(1); opacity:.9; } to { transform:scale(1.07); opacity:1; } }
-  #vwrap { position:relative; flex:0 0 66%; z-index:2; }
+  #vwrap { position:relative; flex:0 0 66%; z-index:7; }  /* nad #glow(6) — glow ZA Sansitem */
   #vwrap video { position:absolute; inset:0; width:100%; height:100%; transition:opacity .35s ease; }
   #vwrap .ratio { padding-top:56.25%; }
   #loopv { opacity:0; }
@@ -190,9 +208,14 @@
 <body>
 
 <div id="ambient"></div>
+<div id="glow"></div>
 
 <header>
-  <img src="logo/LOGO_header.png" alt="SANSIT">
+  <span class="logo-wrap">
+    <img src="logo/LOGO_header.png" alt="SANSIT">
+    <i id="logoPulse"></i>
+    <span class="logo-tm">™</span>
+  </span>
   <div class="right">
     <a href="#about" data-i18n="navAbout">About</a>
     <span id="musicBtn" title="Music on/off">♪</span>
@@ -202,9 +225,7 @@
 </header>
 
 <div id="hero">
-  <div id="glow"></div>
   <div id="halo"></div>
-  <div id="glowOver"></div>
   <div id="vwrap">
     <div class="ratio"></div>
     <video id="loopv" src="video/loop_F2EFEA.mp4" muted loop playsinline preload="auto"></video>
@@ -284,6 +305,9 @@ function fallbackLook() {
   document.getElementById('vig').style.display = '';
   document.getElementById('ambient').style.display = 'none';
   document.getElementById('halo').style.display = 'none';
+  // wideo z WPALONYM tłem → chowamy je POD glow (glow przejeżdża po wideo jednolicie,
+  // zamiast robić ramkę wokół prostokąta wideo)
+  document.getElementById('vwrap').style.zIndex = 2;
 }
 if (!appleWebKit && document.createElement('video').canPlayType('video/webm; codecs="vp9"') !== '') {
   usingAlpha = true;
@@ -314,10 +338,19 @@ iv.addEventListener('timeupdate', () => {
   }
 });
 iv.addEventListener('ended', () => {
-  lv.currentTime = 0;
-  lv.play();
-  lv.style.opacity = 1;
-  iv.style.opacity = 0;
+  // intro po 'ended' trzyma ostatnią klatkę — podmieniamy opacity dopiero, gdy loop
+  // FAKTYCZNIE wyświetli pierwszą klatkę (rVFC), inaczej 1-2 klatki pustki = „mrugnięcie"
+  if (lv.currentTime > 0.05) { try { lv.currentTime = 0; } catch (e) {} }
+  let swapped = false;
+  const swap = () => {
+    if (swapped) return; swapped = true;
+    lv.style.opacity = 1;
+    iv.style.opacity = 0;
+  };
+  const p = lv.play();
+  if (lv.requestVideoFrameCallback) lv.requestVideoFrameCallback(swap);
+  else if (p && p.then) p.then(() => requestAnimationFrame(swap)).catch(swap);
+  else requestAnimationFrame(swap);
 });
 
 // ————— Fallback bez alfy: dopasowanie tła strony do wideo (canvas sampling) —————
@@ -395,24 +428,19 @@ function tick(now) {
 }
 requestAnimationFrame(tick);
 
-// ————— Glow — od razu widoczny, podąża za kursorem —————
+// ————— Glow — fixed NA FRONCIE, od razu widoczny, podąża za kursorem po CAŁEJ stronie —————
 const glow = document.getElementById('glow');
-const glowOver = document.getElementById('glowOver');
-const hero = document.getElementById('hero');
 function renderGlow(x, y) {
-  const g = `radial-gradient(480px circle at ${x}% ${y}%,
+  glow.style.background = `radial-gradient(480px circle at ${x}% ${y}%,
       rgba(124,191,107,.20) 0%, rgba(139,79,255,.14) 45%, transparent 70%)`;
-  glow.style.background = g;
-  glowOver.style.background = g;
 }
-renderGlow(34, 48);
+renderGlow(34, 44);   // spoczynkowo nad Sansitem
 let raf = null;
-hero.addEventListener('mousemove', e => {
+addEventListener('mousemove', e => {
   if (raf) return;
   raf = requestAnimationFrame(() => {
-    const r = hero.getBoundingClientRect();
-    renderGlow(((e.clientX - r.left) / r.width * 100).toFixed(1),
-               ((e.clientY - r.top) / r.height * 100).toFixed(1));
+    renderGlow((e.clientX / innerWidth * 100).toFixed(1),
+               (e.clientY / innerHeight * 100).toFixed(1));
     raf = null;
   });
 });
