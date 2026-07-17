@@ -11,3 +11,6 @@ _work/
 
 # Zaplecze — repo jest PUBLICZNE (GitHub Pages), PRD/briefy zostają lokalnie
 _DOCS/
+
+# Surowe assety książki z Canvy (ciężkie, ~9 MB) — do repo idą tylko lekkie *_web/spread_*.webp
+book/*.png
