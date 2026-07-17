@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Sansit — Uwolnij emocje</title>
+<link rel="icon" type="image/png" href="../logo/favicon_32.png">
+<style>
+  @font-face { font-family:'Nunito'; src:url('../fonts/Nunito-Variable.ttf') format('truetype'); font-weight:200 1000; font-display:swap; }
+  :root { --bg:#F2EFEA; --ink:#3a3630; --ink-soft:#7a7468; --violet:#6B2FD9; --gold:#f2b334; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { height:100%; overflow:hidden; }
+  body { background:var(--bg); font-family:'Nunito','Segoe UI',system-ui,sans-serif; color:var(--ink);
+         -webkit-user-select:none; user-select:none; touch-action:none; }
+  #game { position:fixed; inset:0; overflow:hidden;
+    background:radial-gradient(circle at 50% 42%, #fbf9f5 0%, #efeae2 70%, #e9e3d9 100%); }
+  canvas { position:absolute; inset:0; width:100%; height:100%; display:block; }
+
+  .hud { position:absolute; top:0; left:0; right:0; z-index:5; display:flex; align-items:center;
+         justify-content:space-between; padding:16px 18px; pointer-events:none; }
+  .hud .pill { background:rgba(255,255,255,.82); backdrop-filter:blur(4px); border-radius:999px;
+    padding:8px 16px; font-weight:800; font-size:15px; box-shadow:0 4px 14px rgba(90,70,100,.12);
+    display:flex; align-items:center; gap:7px; }
+  .hud .pill small { font-weight:700; color:var(--ink-soft); font-size:12px; }
+  #exitBtn { pointer-events:auto; cursor:pointer; width:42px; height:42px; border-radius:50%;
+    background:rgba(255,255,255,.82); backdrop-filter:blur(4px); border:none; font-size:19px; color:var(--ink-soft);
+    box-shadow:0 4px 14px rgba(90,70,100,.14); transition:color .15s, transform .15s; line-height:1; }
+  #exitBtn:hover { color:var(--violet); transform:scale(1.06); }
+
+  .caption { position:absolute; bottom:26px; left:0; right:0; text-align:center; color:var(--ink-soft);
+    font-size:14px; font-weight:800; z-index:4; pointer-events:none; }
+
+  .panel { position:absolute; inset:0; z-index:10; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center; gap:8px; padding:32px;
+    background:radial-gradient(circle at 50% 40%, rgba(242,239,234,.7), rgba(242,239,234,.94)); }
+  .panel.hidden { display:none; }
+  .panel h1 { font-weight:900; font-size:clamp(24px,6vw,34px); letter-spacing:-.5px; text-wrap:balance; max-width:15ch; }
+  .panel p { color:var(--ink-soft); font-size:16px; max-width:32ch; line-height:1.5; }
+  .btn { margin-top:14px; background:var(--violet); color:#fff; border:none; cursor:pointer;
+    padding:15px 40px; border-radius:999px; font-family:inherit; font-weight:800; font-size:17px;
+    box-shadow:0 10px 26px rgba(107,47,217,.36); transition:transform .15s; }
+  .btn:hover { transform:translateY(-2px); }
+  .btn.ghost { background:transparent; color:var(--violet); border:2px solid var(--violet); box-shadow:none; padding:11px 28px; font-size:15px; }
+</style>
+</head>
+<body>
+<div id="game">
+  <canvas id="cv"></canvas>
+  <div class="hud">
+    <div class="pill"><span id="trackIcon">🧩</span> <b id="trackName">—</b> <small id="prog"></small></div>
+    <div class="pill">👆 <b id="taps">0</b> <small>ruchów</small></div>
+    <button id="exitBtn" title="Wyjdź">✕</button>
+  </div>
+  <div class="caption" id="caption">Stukaj kamienie — odlecą, jeśli mają wolną drogę</div>
+
+  <div class="panel" id="startPanel">
+    <h1>Uwolnij Sansita!</h1>
+    <p>Sansit utknął wśród skrystalizowanych emocji. Stukaj kamienie — odlecą w stronę, którą wskazują, jeśli droga jest wolna. Kto gra?</p>
+    <div style="display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:12px">
+      <button class="btn" data-track="child">👶 Dla dziecka</button>
+      <button class="btn ghost" data-track="adult">🧑 Dla rodzica</button>
+    </div>
+    <p style="margin-top:20px; font-size:13px; opacity:.7">✨ wersja testowa — Wasz feedback pomoże ją dopieścić</p>
+  </div>
+
+  <div class="panel hidden" id="winPanel">
+    <h1 id="winH">🎉 Uwolniony!</h1>
+    <p id="winP">Czułki Sansita znów świecą pełnym kolorem.</p>
+    <button class="btn" id="nextBtn">Następny poziom ▸</button>
+    <button class="btn ghost" id="closeBtn">Zamknij</button>
+  </div>
+</div>
+
+<script>
+const cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+const sansit=new Image(); sansit.src='sansit.webp';
+
+// paleta emocji (index = emo w danych poziomu)
+const EMO=[
+  {c:'#f2b334'}, // radość - złoto
+  {c:'#4a6fd0'}, // smutek - granat
+  {c:'#e0653f'}, // złość - pomarańcz
+  {c:'#2fbfb8'}, // ciekawość - turkus
+  {c:'#7CBF6B'}, // spokój - zieleń
+  {c:'#8B4FFF'}, // zaskoczenie - fiolet
+];
+
+// ——— POZIOMY jako DANE (JSON-friendly) — rozbudowa = dopisanie obiektu, nie kod ———
+// dir: 'U'|'D'|'L'|'R' (kierunek ucieczki). sansit: [r,c]. pieces: {r,c,dir,emo}
+// Wszystkie plansze zweryfikowane solverem (rozwiązywalne). child=głęb.1, adult=głęb.2–3.
+const TRACKS={
+ child:[
+  {cols:3,rows:3,sansit:[1,1],pieces:[{r:0,c:0,dir:'U',emo:0},{r:0,c:2,dir:'U',emo:3},{r:2,c:0,dir:'D',emo:4},{r:2,c:2,dir:'D',emo:5}]},
+  {cols:3,rows:3,sansit:[1,1],pieces:[{r:0,c:1,dir:'U',emo:0},{r:1,c:0,dir:'L',emo:3},{r:1,c:2,dir:'R',emo:2},{r:2,c:1,dir:'D',emo:1}]},
+  {cols:4,rows:4,sansit:[2,1],pieces:[{r:0,c:1,dir:'U',emo:0},{r:1,c:3,dir:'R',emo:3},{r:3,c:2,dir:'D',emo:4},{r:2,c:0,dir:'L',emo:5},{r:0,c:3,dir:'R',emo:2}]},
+  {cols:4,rows:4,sansit:[1,2],pieces:[{r:0,c:0,dir:'U',emo:0},{r:0,c:3,dir:'U',emo:3},{r:3,c:0,dir:'D',emo:4},{r:3,c:3,dir:'D',emo:5},{r:2,c:1,dir:'L',emo:2},{r:1,c:0,dir:'L',emo:1}]},
+ ],
+ adult:[
+  {cols:5,rows:5,sansit:[2,2],pieces:[{r:2,c:1,dir:'U',emo:0},{r:1,c:1,dir:'L',emo:3},{r:0,c:1,dir:'U',emo:4},{r:2,c:3,dir:'D',emo:5},{r:3,c:3,dir:'R',emo:2},{r:3,c:1,dir:'L',emo:1},{r:1,c:3,dir:'U',emo:0},{r:3,c:2,dir:'D',emo:3},{r:1,c:2,dir:'U',emo:4}]},
+  {cols:4,rows:4,sansit:[2,2],pieces:[{r:0,c:2,dir:'U',emo:0},{r:1,c:2,dir:'L',emo:3},{r:1,c:0,dir:'D',emo:4},{r:2,c:0,dir:'L',emo:5},{r:2,c:1,dir:'U',emo:2},{r:0,c:0,dir:'L',emo:1},{r:3,c:3,dir:'R',emo:5},{r:2,c:3,dir:'R',emo:0}]},
+  {cols:5,rows:5,sansit:[2,2],pieces:[{r:0,c:1,dir:'R',emo:0},{r:0,c:2,dir:'R',emo:3},{r:0,c:3,dir:'R',emo:4},{r:1,c:4,dir:'D',emo:5},{r:2,c:4,dir:'D',emo:2},{r:3,c:4,dir:'D',emo:1},{r:4,c:0,dir:'L',emo:0},{r:3,c:0,dir:'D',emo:3},{r:2,c:0,dir:'U',emo:4},{r:1,c:1,dir:'U',emo:5}]},
+  {cols:5,rows:5,sansit:[2,2],pieces:[{r:2,c:1,dir:'U',emo:0},{r:1,c:1,dir:'L',emo:3},{r:2,c:3,dir:'D',emo:5},{r:3,c:3,dir:'R',emo:2},{r:0,c:2,dir:'U',emo:4},{r:4,c:2,dir:'D',emo:1},{r:1,c:0,dir:'L',emo:0},{r:3,c:4,dir:'R',emo:3},{r:0,c:0,dir:'D',emo:5},{r:4,c:4,dir:'U',emo:2},{r:1,c:3,dir:'U',emo:4},{r:3,c:1,dir:'L',emo:1}]},
+ ],
+};
+const META={ child:{icon:'👶',name:'Dla dziecka'}, adult:{icon:'🧑',name:'Dla rodzica'} };
+let curKey='child', curTrack=TRACKS.child;
+
+const DIRV={U:[-1,0],D:[1,0],L:[0,-1],R:[0,1]};
+let lvlIdx=0, taps=0, pieces=[], sansitCell=null, cols=3, rows=3;
+let anims=[], freed=false, freeT=0, W=0,H=0,DPR=1, ox=0,oy=0,cell=0, pulse=0;
+
+function loadLevel(i){
+  const L=curTrack[i]; cols=L.cols; rows=L.rows; sansitCell=L.sansit.slice();
+  pieces=L.pieces.map((p,idx)=>({...p, id:idx, shake:0}));
+  taps=0; freed=false; freeT=0; anims=[];
+  document.getElementById('trackIcon').textContent=META[curKey].icon;
+  document.getElementById('trackName').textContent=META[curKey].name;
+  document.getElementById('prog').textContent=(i+1)+'/'+curTrack.length;
+  document.getElementById('taps').textContent=0;
+  layout();
+}
+function layout(){
+  DPR=Math.min(2,window.devicePixelRatio||1);
+  W=cv.clientWidth; H=cv.clientHeight;
+  cv.width=W*DPR; cv.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+  const boardMax=Math.min(W-48, H-180, 460);
+  cell=Math.floor(boardMax/Math.max(cols,rows));
+  const bw=cell*cols, bh=cell*rows;
+  ox=(W-bw)/2; oy=(H-bh)/2 - 6;
+}
+function occupied(r,c){
+  if(sansitCell && sansitCell[0]===r && sansitCell[1]===c) return true;
+  return pieces.some(p=>p.r===r && p.c===c);
+}
+function pathClear(p){
+  const [dr,dc]=DIRV[p.dir]; let r=p.r+dr, c=p.c+dc;
+  while(r>=0 && r<rows && c>=0 && c<cols){
+    if(occupied(r,c)) return false;
+    r+=dr; c+=dc;
+  }
+  return true;
+}
+function tryTap(px,py){
+  if(freed) return;
+  const c=Math.floor((px-ox)/cell), r=Math.floor((py-oy)/cell);
+  const p=pieces.find(p=>p.r===r && p.c===c);
+  if(!p) return;
+  if(pathClear(p)){
+    taps++; document.getElementById('taps').textContent=taps;
+    pieces=pieces.filter(x=>x!==p);
+    anims.push({...p, t:0});
+    if(pieces.length===0){ freed=true; freeT=0; setTimeout(showWin, 1100); }
+  } else {
+    p.shake=1;  // zablokowany — drgnięcie
+  }
+}
+
+// ——— render ———
+function drawCrystal(cx,cy,s,color,dir,shake,alpha,offx,offy){
+  ctx.save(); ctx.globalAlpha=alpha;
+  const x=cx+offx+(shake?Math.sin(shake*40)*shake*4:0), y=cy+offy, r=s*0.16;
+  // korpus z gradientem + faza
+  const g=ctx.createLinearGradient(x-s/2,y-s/2,x+s/2,y+s/2);
+  g.addColorStop(0, shade(color,45)); g.addColorStop(.5,color); g.addColorStop(1, shade(color,-38));
+  roundRect(x-s/2+3,y-s/2+3,s-6,s-6,r); ctx.fillStyle=g; ctx.fill();
+  // górny refleks
+  roundRect(x-s/2+7,y-s/2+7,s-14,(s-14)*0.42,r*0.7);
+  ctx.fillStyle='rgba(255,255,255,.28)'; ctx.fill();
+  // wskaźnik kierunku = pulsujący chevron (motyw czułek)
+  ctx.translate(x,y); ctx.rotate({U:0,R:Math.PI/2,D:Math.PI,L:-Math.PI/2}[dir]);
+  const a=0.55+0.45*Math.sin(pulse*3);
+  ctx.strokeStyle=`rgba(255,255,255,${a})`; ctx.lineWidth=s*0.09; ctx.lineCap='round'; ctx.lineJoin='round';
+  const k=s*0.17;
+  ctx.beginPath(); ctx.moveTo(-k,k*0.6); ctx.lineTo(0,-k*0.7); ctx.lineTo(k,k*0.6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-k,k*1.35); ctx.lineTo(0,k*0.05); ctx.lineTo(k,k*1.35); ctx.stroke();
+  ctx.restore();
+}
+function drawSansit(){
+  if(!sansitCell) return;
+  const cx=ox+(sansitCell[1]+0.5)*cell, cy=oy+(sansitCell[0]+0.5)*cell;
+  const s=cell*0.92, iw=s, ih=s* (sansit.height/sansit.width || 0.75);
+  ctx.save();
+  if(freed){
+    freeT+=1/60;
+    const glow=Math.min(1,freeT*1.6);
+    // rozbłysk złotem
+    const gg=ctx.createRadialGradient(cx,cy,0,cx,cy,cell*1.4*glow);
+    gg.addColorStop(0,`rgba(242,179,52,${.5*glow})`); gg.addColorStop(1,'rgba(242,179,52,0)');
+    ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(cx,cy,cell*1.4,0,7); ctx.fill();
+    if(sansit.complete) ctx.drawImage(sansit, cx-iw/2, cy-ih/2, iw, ih);
+    // poświata czułków
+    for(const dx of [-iw*0.2, iw*0.2]){
+      const g2=ctx.createRadialGradient(cx+dx,cy-ih*0.42,0,cx+dx,cy-ih*0.42,20);
+      g2.addColorStop(0,`rgba(242,179,52,${.9*glow})`); g2.addColorStop(1,'rgba(242,179,52,0)');
+      ctx.fillStyle=g2; ctx.beginPath(); ctx.arc(cx+dx,cy-ih*0.42,20,0,7); ctx.fill();
+    }
+  } else {
+    // uwięziony: przygaszony (grayscale)
+    ctx.filter='grayscale(.85) brightness(1.05)'; ctx.globalAlpha=.9;
+    if(sansit.complete) ctx.drawImage(sansit, cx-iw/2, cy-ih/2, iw, ih);
+    ctx.filter='none';
+  }
+  ctx.restore();
+}
+function drawBoard(){
+  // delikatne pola siatki
+  ctx.fillStyle='rgba(120,100,140,.05)';
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    roundRect(ox+c*cell+3, oy+r*cell+3, cell-6, cell-6, cell*0.16); ctx.fill();
+  }
+}
+function frame(){
+  pulse+=1/60;
+  ctx.clearRect(0,0,W,H);
+  drawBoard();
+  drawSansit();
+  const s=cell*0.86;
+  for(const p of pieces){
+    if(p.shake>0){ p.shake=Math.max(0,p.shake-0.05); }
+    drawCrystal(ox+(p.c+0.5)*cell, oy+(p.r+0.5)*cell, s, EMO[p.emo].c, p.dir, p.shake, 1, 0,0);
+  }
+  // animacje odlotu
+  for(let i=anims.length-1;i>=0;i--){
+    const a=anims[i]; a.t+=1/60; const pr=Math.min(1,a.t/0.4);
+    const [dr,dc]=DIRV[a.dir]; const dist=Math.max(W,H)*easeIn(pr);
+    drawCrystal(ox+(a.c+0.5)*cell, oy+(a.r+0.5)*cell, s, EMO[a.emo].c, a.dir, 0, 1-pr, dc*dist, dr*dist);
+    if(pr>=1) anims.splice(i,1);
+  }
+  requestAnimationFrame(frame);
+}
+function easeIn(t){ return t*t*t; }
+function shade(hex,d){ const n=parseInt(hex.slice(1),16); const f=v=>Math.max(0,Math.min(255,v+d));
+  return `rgb(${f(n>>16)},${f((n>>8)&255)},${f(n&255)})`; }
+function roundRect(x,y,w,h,r){ ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+// ——— input ———
+function pt(e){ const r=cv.getBoundingClientRect();
+  return [ (e.touches?e.touches[0].clientX:e.clientX)-r.left, (e.touches?e.touches[0].clientY:e.clientY)-r.top ]; }
+cv.addEventListener('click', e=>{ const [x,y]=pt(e); tryTap(x,y); });
+cv.addEventListener('touchstart', e=>{ e.preventDefault(); const [x,y]=pt(e); tryTap(x,y); }, {passive:false});
+
+// ——— stany ———
+function play(key){ curKey=key; curTrack=TRACKS[key]; lvlIdx=0;
+  document.getElementById('startPanel').classList.add('hidden'); loadLevel(0); }
+function showWin(){
+  const last=lvlIdx>=curTrack.length-1;
+  document.getElementById('winH').textContent = last? '🌟 Wszystkie emocje uwolnione!' : '🎉 Uwolniony!';
+  document.getElementById('winP').textContent = last? 'Ukończyłeś wszystkie plansze tej ścieżki. Sansit dziękuje!' : 'Czułki Sansita znów świecą pełnym kolorem.';
+  document.getElementById('nextBtn').style.display = last? 'none':'';
+  document.getElementById('winPanel').classList.remove('hidden');
+}
+function next(){ document.getElementById('winPanel').classList.add('hidden'); lvlIdx++; loadLevel(lvlIdx); }
+function quit(){ document.getElementById('winPanel').classList.add('hidden'); document.getElementById('startPanel').classList.remove('hidden'); pieces=[]; sansitCell=null; }
+
+document.querySelectorAll('[data-track]').forEach(b=> b.onclick=()=>play(b.dataset.track));
+document.getElementById('nextBtn').onclick=next;
+document.getElementById('closeBtn').onclick=quit;
+document.getElementById('exitBtn').onclick=quit;
+addEventListener('resize', layout);
+layout(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>
