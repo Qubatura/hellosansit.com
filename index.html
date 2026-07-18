@@ -252,6 +252,49 @@
   .card .n { font-weight:800; font-size:15px; margin-top:10px; }
   .card .ne { color:var(--ink-soft); font-size:12.5px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; }
 
+  /* ————— ANKIETA / lead-magnet (07-18): 3 kliki → kolorowanka PDF; feedback na nasz serwer.
+     Pod About/Sandrą: trafia rodzica, który już ma książkę i doscrollował przez kontekst. ————— */
+  #survey { padding:10px 24px 96px; position:relative; z-index:3; }
+  .sv-card { max-width:560px; margin:0 auto; background:#fff; border-radius:26px;
+    padding:clamp(28px,4vw,44px); text-align:center;
+    box-shadow:0 22px 60px rgba(74,31,160,.14), 0 4px 14px rgba(90,70,100,.10); }
+  .sv-kicker { color:#c98a12; font-weight:800; font-size:13px; letter-spacing:.6px;
+    text-transform:uppercase; margin-bottom:10px; }
+  .sv-card h2 { font-weight:900; font-size:clamp(22px,3vw,30px); letter-spacing:-.5px; margin-bottom:8px; }
+  .sv-sub { color:var(--ink-soft); font-size:15.5px; margin-bottom:22px; }
+  .sv-dots { display:flex; gap:8px; justify-content:center; margin-bottom:22px; }
+  .sv-dots i { width:8px; height:8px; border-radius:50%; background:rgba(107,47,217,.2); transition:.25s; }
+  .sv-dots i.on { background:var(--violet); transform:scale(1.25); }
+  .sv-dots i.done { background:var(--gold); }
+  .sv-q { font-weight:800; font-size:19px; line-height:1.4; margin-bottom:20px; text-wrap:balance;
+    min-height:2.6em; display:flex; align-items:center; justify-content:center; }
+  .sv-opts { display:flex; flex-direction:column; gap:11px; }
+  .sv-opt { background:#faf8f4; border:2px solid #eee7db; border-radius:14px; padding:14px 18px;
+    font-family:inherit; font-weight:800; font-size:15.5px; color:var(--ink); cursor:pointer;
+    transition:transform .12s ease, border-color .15s ease, background .15s ease; }
+  .sv-opt:hover { border-color:var(--violet); background:#fff; transform:translateY(-2px); }
+  .sv-back { margin-top:16px; background:none; border:none; color:var(--ink-soft);
+    font-family:inherit; font-weight:700; font-size:13.5px; cursor:pointer; }
+  .sv-back:hover { color:var(--violet); }
+  .sv-dl { display:inline-block; margin:10px 0 4px; background:var(--gold); color:#4a3a12; text-decoration:none;
+    padding:15px 34px; border-radius:999px; font-weight:900; font-size:16px;
+    box-shadow:0 10px 26px rgba(242,179,52,.42); transition:transform .15s ease; }
+  .sv-dl:hover { transform:translateY(-2px); }
+  .sv-email { margin-top:26px; padding-top:22px; border-top:1px solid #efe8dc; }
+  .sv-email .lab { font-weight:800; font-size:15px; margin-bottom:14px; }
+  .sv-email input[type=email] { width:100%; border:2px solid #eee7db; border-radius:12px; padding:12px 16px;
+    font-family:inherit; font-weight:700; font-size:15px; color:var(--ink); background:#faf8f4; outline:none; margin-bottom:12px; }
+  .sv-email input[type=email]:focus { border-color:var(--violet); background:#fff; }
+  .sv-consent { display:flex; gap:9px; align-items:flex-start; text-align:left; font-size:12.5px;
+    color:var(--ink-soft); line-height:1.5; margin-bottom:14px; }
+  .sv-consent input { margin-top:2px; flex:none; width:16px; height:16px; accent-color:var(--violet); }
+  .sv-consent a { color:var(--violet); }
+  .sv-save { background:var(--violet); color:#fff; border:none; border-radius:999px; padding:12px 30px;
+    font-family:inherit; font-weight:800; font-size:15px; cursor:pointer; transition:transform .15s ease, opacity .15s ease; }
+  .sv-save:hover:not(:disabled) { transform:translateY(-2px); }
+  .sv-save:disabled { opacity:.45; cursor:default; }
+  .sv-hp { position:absolute; left:-9999px; width:1px; height:1px; opacity:0; }
+
   footer {
     text-align:center; color:var(--ink-soft); font-size:13px; padding:26px 0 40px;
     position:relative; z-index:3;
@@ -370,6 +413,11 @@
     <p class="lead" data-i18n="ab4L"></p>
   </div>
 
+</section>
+
+<!-- ————— ANKIETA — 3 kliki → darmowa kolorowanka PDF (feedback: głębia / sequele / cena) ————— -->
+<section id="survey">
+  <div class="sv-card" id="svCard"><!-- render z JS (svRender), dwujęzycznie --></div>
 </section>
 
 <footer>Sansit™ · hellosansit.com</footer>
@@ -628,6 +676,128 @@ function renderStrip(l) {
   }).join('');
 }
 
+// ————— ANKIETA (lead-magnet) — 3 kliki → kolorowanka PDF. Dane jako bilingual obiekt —————
+// Feedback leci na NASZ serwer (send-sansit.php, honeypot, RODO-clean). Endpoint domknięty
+// przy decyzji o hostingu: same-origin jeśli Sansit na LiteSpeed, albo CORS z Pages.
+const SURVEY_ENDPOINT = 'https://qubatura.eu/send-sansit.php';   // TODO wiring @ hosting
+const PDF_URL = 'book/sansit-coloring.pdf';                       // TODO: PDF z OpenArt (Kuba)
+const SURVEY = {
+  en: {
+    kicker:'Free coloring page 🎨',
+    h:'Already have Sansit?',
+    sub:'Three quick taps — and a coloring page is yours.',
+    qs:[
+      { q:'Do you feel Sansit is more than an ordinary coloring book?', a:['Absolutely ✨','A little','Not really'] },
+      { q:'Does your child ask about more Sansit stories?',              a:['Yes, often','Sometimes','Not yet'] },
+      { q:'The price of the book feels…',                               a:['Just right','A bit high','I’d pay more'] },
+    ],
+    thanksH:'Thank you! 💜', thanksP:'Here’s your Sansit coloring page.',
+    download:'Download coloring page ↓',
+    emailQ:'Want to hear when the next Sansit stories arrive?',
+    emailPh:'your@email.com',
+    consent:'I agree to receive occasional Sansit news. ', consentLink:'Privacy',
+    save:'Keep me posted', savedH:'You’re on the list 🎉',
+    savedP:'We’ll let you know when the next Sansit lands.', back:'‹ back',
+  },
+  pl: {
+    kicker:'Darmowa kolorowanka 🎨',
+    h:'Masz już Sansita?',
+    sub:'Trzy szybkie kliknięcia — i kolorowanka jest Twoja.',
+    qs:[
+      { q:'Czujesz, że Sansit to coś więcej niż zwykła kolorowanka?', a:['Zdecydowanie ✨','Trochę','Nie bardzo'] },
+      { q:'Czy dziecko dopytuje o kolejne historie Sansita?',         a:['Tak, często','Czasem','Jeszcze nie'] },
+      { q:'Cena książki jest…',                                       a:['W sam raz','Trochę za wysoka','Dałbym więcej'] },
+    ],
+    thanksH:'Dziękujemy! 💜', thanksP:'Oto Twoja kolorowanka Sansita.',
+    download:'Pobierz kolorowankę ↓',
+    emailQ:'Chcesz wiedzieć, gdy pojawią się kolejne historie Sansita?',
+    emailPh:'twoj@email.com',
+    consent:'Zgadzam się na okazjonalne wieści o Sansicie. ', consentLink:'Prywatność',
+    save:'Dawajcie znać', savedH:'Jesteś na liście 🎉',
+    savedP:'Damy znać, gdy pojawi się kolejny Sansit.', back:'‹ wróć',
+  },
+};
+let svStep = 0;                 // 0..2 = pytania, 3 = nagroda
+let svAnswers = [];            // [{q, a}] w języku wypełniania
+let svEmailSent = false;
+
+function svPost(payload) {
+  // fire-and-forget; nie blokujemy UX gdy backend jeszcze niepodpięty
+  try {
+    return fetch(SURVEY_ENDPOINT, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload),
+    }).catch(() => {});
+  } catch (e) { return Promise.resolve(); }
+}
+function svRender() {
+  const box = document.getElementById('svCard');
+  if (!box) return;
+  const S = SURVEY[lang];
+  const dots = [0,1,2].map(i =>
+    `<i class="${i < svStep ? 'done' : (i === svStep ? 'on' : '')}"></i>`).join('');
+
+  if (svStep < 3) {
+    const Q = S.qs[svStep];
+    box.innerHTML =
+      `<div class="sv-kicker">${S.kicker}</div>
+       <h2>${S.h}</h2>
+       <div class="sv-sub">${S.sub}</div>
+       <div class="sv-dots">${dots}</div>
+       <div class="sv-q">${Q.q}</div>
+       <div class="sv-opts">
+         ${Q.a.map((t,i) => `<button class="sv-opt" data-i="${i}">${t}</button>`).join('')}
+       </div>
+       ${svStep > 0 ? `<button class="sv-back">${S.back}</button>` : ''}`;
+    box.querySelectorAll('.sv-opt').forEach(b => b.onclick = () => svPick(+b.dataset.i, b.textContent));
+    const back = box.querySelector('.sv-back');
+    if (back) back.onclick = () => { svStep--; svAnswers.pop(); svRender(); };
+  } else {
+    box.innerHTML =
+      `<div class="sv-kicker">${S.kicker}</div>
+       <h2>${S.thanksH}</h2>
+       <div class="sv-sub">${S.thanksP}</div>
+       <a class="sv-dl" href="${PDF_URL}" download>${S.download}</a>
+       <div class="sv-email" id="svEmail">
+         ${svEmailSent
+           ? `<div class="lab">${S.savedH}</div><div class="sv-sub" style="margin:0">${S.savedP}</div>`
+           : `<div class="lab">${S.emailQ}</div>
+              <input type="email" id="svMail" placeholder="${S.emailPh}" autocomplete="email">
+              <label class="sv-consent">
+                <input type="checkbox" id="svConsent">
+                <span>${S.consent}<a href="#" onclick="return false">${S.consentLink}</a></span>
+              </label>
+              <input type="text" class="sv-hp" id="svHp" tabindex="-1" autocomplete="off" aria-hidden="true">
+              <button class="sv-save" id="svSave" disabled>${S.save}</button>`}
+       </div>`;
+    if (!svEmailSent) {
+      const mail = box.querySelector('#svMail'), cons = box.querySelector('#svConsent'), btn = box.querySelector('#svSave');
+      const ok = () => btn.disabled = !(cons.checked && /.+@.+\..+/.test(mail.value.trim()));
+      mail.oninput = ok; cons.onchange = ok;
+      btn.onclick = () => svSaveEmail(mail.value.trim());
+    }
+  }
+}
+function svPick(i, label) {
+  const S = SURVEY[lang];
+  svAnswers[svStep] = { q: S.qs[svStep].q, a: label };
+  svStep++;
+  if (svStep === 3) {
+    svPost({ subject:'Sansit — ankieta', lang,
+      a1:svAnswers[0] && svAnswers[0].a, a2:svAnswers[1] && svAnswers[1].a, a3:svAnswers[2] && svAnswers[2].a,
+      message: svAnswers.map((x,n) => `${n+1}. ${x.q}\n   → ${x.a}`).join('\n'), botcheck:'' });
+  }
+  svRender();
+}
+function svSaveEmail(email) {
+  const box = document.getElementById('svCard');
+  if (box.querySelector('#svHp') && box.querySelector('#svHp').value !== '') { svEmailSent = true; svRender(); return; }
+  svPost({ subject:'Sansit — zapis email', lang, kontakt:email, consent:true,
+    message:'Zapis na listę Sansita.\nEmail: ' + email + '\n\nOdpowiedzi ankiety:\n' +
+      svAnswers.map((x,n) => `${n+1}. ${x.a}`).join('\n'), botcheck:'' });
+  svEmailSent = true; svRender();
+}
+
 function setLang(l) {
   lang = l;
   document.documentElement.lang = l;
@@ -637,6 +807,7 @@ function setLang(l) {
   });
   document.querySelectorAll('.lang').forEach(el => el.classList.toggle('on', el.dataset.lang === l));
   renderStrip(l);
+  svRender();
 }
 document.querySelectorAll('.lang').forEach(el => el.addEventListener('click', () => setLang(el.dataset.lang)));
 setLang('en');
