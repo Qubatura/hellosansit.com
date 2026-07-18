@@ -141,6 +141,16 @@
   }
   .song-pill:hover { color:var(--violet); border-color:var(--violet); transform:translateY(-1px); }
 
+  /* ZACZEPKA lead-magnet (07-18): mały złoty pasek pod hero → smooth-scroll do #survey.
+     Discovery darmowej kolorowanki (ankieta była zakopana na dole). Złoto = „prezent". */
+  .free-teaser { display:flex; justify-content:center; padding:2px 24px 34px; position:relative; z-index:3; }
+  .free-teaser a { display:inline-flex; align-items:center; gap:9px; text-decoration:none; cursor:pointer;
+    background:#fdf4dd; color:#8a5a12; font-weight:800; font-size:14px;
+    padding:11px 22px; border-radius:999px; border:1.5px solid #f0d68f;
+    box-shadow:0 6px 18px rgba(242,179,52,.18); transition:transform .15s ease, box-shadow .15s ease; }
+  .free-teaser a:hover { transform:translateY(-2px); box-shadow:0 10px 24px rgba(242,179,52,.30); }
+  @media (max-width:600px) { .free-teaser { padding:0 20px 26px; } .free-teaser a { font-size:13px; padding:10px 18px; } }
+
   @media (max-width:820px) {
     #hero { flex-direction:column; overflow-x:clip; }
     /* WIĘKSZY Sansit: wideo 165vw wycentrowane na postaci (środek klatki),
@@ -348,6 +358,11 @@
       <span id="songBtn" class="song-pill">🎵 <span data-i18n="song">Sansit Song</span></span>
     </div>
   </div>
+</div>
+
+<!-- zaczepka: darmowa kolorowanka → smooth-scroll do ankiety (#survey) -->
+<div class="free-teaser">
+  <a href="#survey" data-i18n="freeGift">🎨 Free printable coloring page — grab yours ↓</a>
 </div>
 
 <!-- ————— KSIĄŻKA — „co dostajesz": pokazujemy format (kolor|kontur) zamiast opisywać ————— -->
@@ -599,6 +614,7 @@ addEventListener('mousemove', e => {
 const I18N = {
   en: {
     navAbout:'About', cta:'Get the book', ctaGhost:'Meet Sansit&nbsp;↓', song:'Sansit Song',
+    freeGift:'🎨 Free printable coloring page — grab yours ↓',
     toast:'🎵 Sansit’s song is coming soon!',
     stripHint:'← swipe through the emotions →',
     heroH1:'Meet Sansit — feelings have colors!',
@@ -625,6 +641,7 @@ const I18N = {
   },
   pl: {
     navAbout:'O Sansicie', cta:'Kup książkę', ctaGhost:'Poznaj Sansita&nbsp;↓', song:'Piosenka Sansita',
+    freeGift:'🎨 Darmowa kolorowanka do druku — złap swoją ↓',
     toast:'🎵 Piosenka Sansita — już wkrótce!',
     stripHint:'← przewiń przez emocje →',
     heroH1:'Poznaj Sansita — emocje mają kolory!',
