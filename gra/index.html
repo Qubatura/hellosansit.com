@@ -6,7 +6,7 @@
 <title>Sansit — Emotions Escape (prototyp)</title>
 <style>
   @font-face { font-family:'Nunito'; src:url('../fonts/Nunito-Variable.ttf') format('truetype'); font-weight:200 1000; font-display:swap; }
-  :root { --bg:#F2EFEA; --ink:#3a3630; --ink-soft:#7a7468; --violet:#6B2FD9; --gold:#f2b334; }
+  :root { --bg:#F2EFEA; --ink:#3a3630; --ink-soft:#7a7468; --violet:#6B2FD9; --joy:#F6E96B; }
   * { margin:0; padding:0; box-sizing:border-box; }
   html,body { height:100%; overflow:hidden; }
   body { background:var(--bg); font-family:'Nunito','Segoe UI',system-ui,sans-serif; color:var(--ink);
@@ -57,7 +57,7 @@
   .lb { margin:8px 0 2px; width:min(300px,80vw); display:flex; flex-direction:column; gap:5px; }
   .lb .r { display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.7);
     border-radius:12px; padding:8px 14px; font-weight:800; font-size:15px; }
-  .lb .r.me { background:#fff5db; box-shadow:0 0 0 2px var(--gold) inset; }
+  .lb .r.me { background:#fff5db; box-shadow:0 0 0 2px var(--joy) inset; }
   .lb .r .medal { font-size:17px; width:22px; text-align:center; }
   .lb .r .nm { flex:1; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .lb .r .tm { font-variant-numeric:tabular-nums; color:var(--ink-soft); }
@@ -66,7 +66,7 @@
   .nameRow input { flex:1; border:2px solid #ddd6cc; border-radius:999px; padding:11px 18px;
     font-family:inherit; font-weight:800; font-size:15px; color:var(--ink); background:#fff; outline:none; }
   .nameRow input:focus { border-color:var(--violet); }
-  .nameRow button { background:var(--gold); color:#4a3a12; border:none; border-radius:999px;
+  .nameRow button { background:var(--joy); color:#4a3a12; border:none; border-radius:999px;
     padding:0 22px; font-family:inherit; font-weight:900; font-size:15px; cursor:pointer; }
   .bigtime { font-size:34px; font-weight:900; color:var(--violet); font-variant-numeric:tabular-nums;
     letter-spacing:-.5px; margin-top:2px; }
@@ -134,7 +134,7 @@ const sansit=new Image(); sansit.src='sansit.webp';
 
 // paleta emocji (index = emo w danych poziomu)
 const EMO=[
-  {c:'#f2b334'}, // radość - złoto
+  {c:'#F4E04A'}, // radość - żółty (kolor radości)
   {c:'#4a6fd0'}, // smutek - granat
   {c:'#e0653f'}, // złość - pomarańcz
   {c:'#2fbfb8'}, // ciekawość - turkus
@@ -302,12 +302,12 @@ function drawSansit(){
     freeT+=1/60;
     const glow=Math.min(1,freeT*1.6);
     const gg=ctx.createRadialGradient(cx,cy,0,cx,cy,cell*1.4*glow);
-    gg.addColorStop(0,`rgba(242,179,52,${.5*glow})`); gg.addColorStop(1,'rgba(242,179,52,0)');
+    gg.addColorStop(0,`rgba(247,240,120,${.5*glow})`); gg.addColorStop(1,'rgba(247,240,120,0)');
     ctx.fillStyle=gg; ctx.beginPath(); ctx.arc(cx,cy,cell*1.4,0,7); ctx.fill();
     if(sansit.complete) ctx.drawImage(sansit, cx-iw/2, cy-ih/2, iw, ih);
     for(const dx of [-iw*0.2, iw*0.2]){
       const g2=ctx.createRadialGradient(cx+dx,cy-ih*0.42,0,cx+dx,cy-ih*0.42,20);
-      g2.addColorStop(0,`rgba(242,179,52,${.9*glow})`); g2.addColorStop(1,'rgba(242,179,52,0)');
+      g2.addColorStop(0,`rgba(247,240,120,${.9*glow})`); g2.addColorStop(1,'rgba(247,240,120,0)');
       ctx.fillStyle=g2; ctx.beginPath(); ctx.arc(cx+dx,cy-ih*0.42,20,0,7); ctx.fill();
     }
   } else {
