@@ -578,10 +578,12 @@ function onScroll() {
   const dim = 1 - t * 0.6;                         // 1 → 0.4
   ambEl.style.opacity = dim;
   glowEl.style.opacity = 0.55 - t * 0.3;           // glow też ciszej nad tekstem (0.55 → 0.25)
-  // sygnał scrolla (mobile) znika po ruszeniu z miejsca — spełnił rolę
-  const moved = scrollY > 40;
-  cueEl.classList.toggle('hide', moved);
-  veilEl.classList.toggle('hide', moved);
+  // sygnał scrolla (mobile) trzyma się DO SAMEGO KOŃCA i gaśnie DOPIERO na samym dole
+  // (nie ma już czego scrollować). Wcześniej znikał po pierwszym ruchu → dalej nie było
+  // wiadomo, że jest ciąg dalszy (Kuba+Sandra 07-19).
+  const atBottom = innerHeight + scrollY >= document.documentElement.scrollHeight - 4;
+  cueEl.classList.toggle('hide', atBottom);
+  veilEl.classList.toggle('hide', atBottom);
 }
 addEventListener('scroll', onScroll, { passive:true });
 onScroll();
@@ -669,7 +671,7 @@ const I18N = {
     heroP:'An illustrated book to read and color — a little visitor from far away learning what emotions are, exactly like your child.',
     bkPrice:'$9.99 · on Amazon',
     bkH:'Sansit: Joy — 24 pages',
-    bkP:'Every scene tells a piece of the story — and invites your child to color it in. Your child lives the emotion, then gives it a color of their own.',
+    bkP:'Every scene tells a piece of the story — and invites your child to color it in. Your child lives the emotion.',
     bkF1:'Story + coloring<small>Full-color scenes with elements ready for crayons.</small>',
     bkF2:'Activities inside<small>Three mini-activities with Sansit’s backpack.</small>',
     bkF3:'Made for little hands<small>For ages 4–5 · handy 8.5 × 8.5" square.</small>',
@@ -696,7 +698,7 @@ const I18N = {
     heroP:'Ilustrowana książka do czytania i kolorowania — mały przybysz z daleka, który dopiero uczy się, czym są emocje, zupełnie jak Twoje dziecko.',
     bkPrice:'$9.99 · na Amazon',
     bkH:'Sansit: Joy — 24 strony',
-    bkP:'Każda scena opowiada kawałek historii — i od razu zaprasza do pokolorowania. Dziecko przeżywa emocję, a potem nadaje jej własny kolor.',
+    bkP:'Każda scena opowiada kawałek historii — i od razu zaprasza do pokolorowania. Dziecko przeżywa emocję.',
     bkF1:'Historia + kolorowanie<small>Pełnokolorowe sceny z elementami pod kredkę.</small>',
     bkF2:'Aktywności w środku<small>Trzy mikroaktywności z plecakiem Sansita.</small>',
     bkF3:'Dla małych rąk<small>Dla dzieci 4–5 lat · kwadrat ~21,5 × 21,5 cm, poręczny — zabierzesz wszędzie.</small>',
