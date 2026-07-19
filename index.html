@@ -319,6 +319,15 @@
     text-align:center; color:var(--ink-soft); font-size:13px; padding:26px 0 40px;
     position:relative; z-index:3;
   }
+  /* metka twórcy (07-19): Sansit zostaje marką, Qubatura tylko cichy podpis-link.
+     Delikatny puls koloru = subtelny sygnał „to się klika", bez krzyku. */
+  footer a.qg {
+    color:var(--violet); font-weight:800; text-decoration:none;
+    animation:qgPulse 2.8s ease-in-out infinite;
+  }
+  footer a.qg:hover { text-decoration:underline; animation:none; opacity:1; }
+  @keyframes qgPulse { 0%,100% { opacity:.6; } 50% { opacity:1; } }
+  @media (prefers-reduced-motion:reduce) { footer a.qg { animation:none; opacity:.85; } }
 
   /* toast „coming soon" (Sansit Song) */
   #toast {
@@ -469,7 +478,7 @@
   <div class="sv-card" id="svCard"><!-- render z JS (svRender), dwujęzycznie --></div>
 </section>
 
-<footer>Sansit™ · hellosansit.com</footer>
+<footer>Sansit™ · made with care by <a class="qg" href="https://qubatura.eu" target="_blank" rel="noopener">Qubatura Group</a></footer>
 <div id="toast">🎵 Sansit's song is coming soon!</div>
 
 <script>
