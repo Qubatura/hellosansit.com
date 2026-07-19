@@ -78,7 +78,9 @@
   #musicBtn { font-size:17px; }
   #musicBtn.playing { color:var(--violet); }
   .lang.on { color:var(--ink); }
-  header .cta-mini {
+  /* selektor podbity do (0,2,2) — inaczej `header .right a` (szary --ink-soft) wygrywał
+     specyficznością nad `.cta-mini{color:#fff}` i napis „Get the book" był szary (07-19) */
+  header .right a.cta-mini {
     background:var(--violet); color:#fff; padding:8px 18px; border-radius:999px;
     font-weight:800; font-size:13px;
   }
@@ -204,6 +206,8 @@
     #book { padding:10px 22px 70px; }
     .book-inner { grid-template-columns:1fr; gap:56px; }
     .cover { width:30%; left:0; bottom:-10%; }
+    /* „Kup książkę" na środek na mobile (07-19) — reszta układu bez ruchu */
+    .book-cta { display:block; width:max-content; max-width:100%; margin-inline:auto; }
   }
 
   /* ————— ABOUT — narracja: potrzeba → Sansit → świat emocji → Sandra ————— */
@@ -212,7 +216,8 @@
   #about h2 { font-weight:900; font-size:clamp(22px,3vw,34px); letter-spacing:-.5px; margin-bottom:18px; }
   #about p { color:var(--ink-soft); line-height:1.7; font-size:17px; margin-bottom:16px; }
   #about .lead { color:var(--ink); font-weight:800; font-size:19px; }
-  .gold { color:#c98a12; font-weight:800; }
+  /* akcent radości (07-19) — było brzozowe złoto; „złoto" wypada z całego języka marki */
+  .joy-accent { color:var(--joy-ink); font-weight:800; }
 
   /* Blok 1 — hak: wyśrodkowany, duży oddech */
   .ab-hook { text-align:center; }
@@ -323,12 +328,36 @@
     opacity:0; pointer-events:none; transition:opacity .3s ease, transform .3s ease; z-index:60;
   }
   #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ————— SYGNAŁ SCROLLA (mobile, 07-19) — na małym iPhonie pierwszy kadr nie zdradzał,
+     że jest ciąg dalszy. Wariant C: miękka „zasłonka" u dołu (treść wychodzi spod fade =
+     „jest więcej") + delikatny chevron z bounce. Oba FIXED (działają niezależnie od
+     wysokości hero na danym telefonie) i ZNIKAJĄ po pierwszym scrollu. ————— */
+  #scrollveil, #scrollcue { display:none; }
+  @media (max-width:820px) {
+    #scrollveil {
+      display:block; position:fixed; left:0; right:0; bottom:0; height:74px; z-index:14;
+      pointer-events:none; transition:opacity .45s ease;
+      background:linear-gradient(to top, var(--bg) 12%, transparent);
+    }
+    #scrollcue {
+      display:block; position:fixed; left:50%; bottom:14px; transform:translateX(-50%);
+      z-index:15; pointer-events:none; transition:opacity .45s ease;
+    }
+    #scrollcue svg { width:26px; height:26px; stroke:var(--violet); fill:none;
+      stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round;
+      animation:cueBounce 1.8s ease-in-out infinite; }
+    #scrollveil.hide, #scrollcue.hide { opacity:0; }
+  }
+  @keyframes cueBounce { 0%,100% { transform:translateY(0); opacity:.5; } 50% { transform:translateY(6px); opacity:1; } }
 </style>
 </head>
 <body>
 
 <div id="ambient"></div>
 <div id="glow"></div>
+<div id="scrollveil"></div>
+<div id="scrollcue"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></div>
 
 <header>
   <span class="logo-wrap">
@@ -367,7 +396,7 @@
 
 <!-- zaczepka: darmowa kolorowanka → smooth-scroll do ankiety (#survey) -->
 <div class="free-teaser">
-  <a href="#survey" data-i18n="freeGift">🎨 Free printable coloring page — grab yours ↓</a>
+  <a href="#survey" data-i18n="freeGift">Free printable coloring page — download ↓</a>
 </div>
 
 <!-- ————— KSIĄŻKA — „co dostajesz": pokazujemy format (kolor|kontur) zamiast opisywać ————— -->
@@ -453,15 +482,23 @@ const lv = document.getElementById('loopv');
 // z przebłyskami. canPlayType nie wystarczy — wykluczamy cały WebKit po vendorze Apple
 // (na iOS każda przeglądarka to WebKit). Docelowo: HEVC-alpha z Maca.
 let usingAlpha = false;
+let matchBg = true;   // czy próbkować tło z wideo (patrz sampleBg). Fallback wyłącza (07-19).
 const appleWebKit = /apple/i.test(navigator.vendor || '');
 // Fallback bez alfy = wideo z wpalonym tłem → żywa perła robiłaby „biały prostokąt"
 // wokół sceny. Do czasu HEVC-alpha: fallback dostaje czysty, jednolity look.
 function fallbackLook() {
-  document.getElementById('vig').style.display = '';
+  // SAFARI-ONLY STOPGAP (07-19): Safari to jedyna przeglądarka bez alfy VP9 → dostaje mp4
+  // z WPALONYM tłem #F2EFEA. Dekoder Safari renderował ten kolor odrobinę inaczej niż CSS
+  // → widoczny „kwadrat pod Sansitem". Kasujemy szew trzema ruchami:
+  //  1) --bg TWARDO na wpalony kolor (bez dryfu z próbkowania),
+  //  2) sampleBg WYŁĄCZONY (to on rozjeżdżał --bg na próbkowany kolor → prostokąt),
+  //  3) #vig zgaszony (inset-shadow rysował dolną krawędź boxa).
+  // Docelowo: HEVC-alpha z Maca → Sansit realnie wycięty, temat znika.
+  matchBg = false;
+  document.documentElement.style.setProperty('--bg', '#F2EFEA');
+  document.getElementById('vig').style.display = 'none';
   document.getElementById('ambient').style.display = 'none';
   document.getElementById('halo').style.display = 'none';
-  // wideo z WPALONYM tłem → chowamy je POD glow (glow przejeżdża po wideo jednolicie,
-  // zamiast robić ramkę wokół prostokąta wideo)
   document.getElementById('vwrap').style.zIndex = 2;
 }
 if (!appleWebKit && document.createElement('video').canPlayType('video/webm; codecs="vp9"') !== '') {
@@ -524,8 +561,8 @@ function sampleBg(v) {
     } catch (e) {}
   }, 100);
 }
-iv.addEventListener('playing', () => { if (!usingAlpha) sampleBg(iv); });
-lv.addEventListener('playing', () => { if (!usingAlpha) sampleBg(lv); });
+iv.addEventListener('playing', () => { if (!usingAlpha && matchBg) sampleBg(iv); });
+lv.addEventListener('playing', () => { if (!usingAlpha && matchBg) sampleBg(lv); });
 
 // ————— Header: tło dopiero po scrollu + wyciszenie perły pod tekstem —————
 // (recenzja 07-17: ruchome tło za długim body copy męczy oko → pełna moc w hero,
@@ -533,12 +570,18 @@ lv.addEventListener('playing', () => { if (!usingAlpha) sampleBg(lv); });
 const hdr = document.querySelector('header');
 const ambEl = document.getElementById('ambient');
 const glowEl = document.getElementById('glow');
+const cueEl = document.getElementById('scrollcue');
+const veilEl = document.getElementById('scrollveil');
 function onScroll() {
   hdr.classList.toggle('scrolled', scrollY > 24);
   const t = Math.min(1, scrollY / innerHeight);   // 0 = hero, 1 = zjechany ekran
   const dim = 1 - t * 0.6;                         // 1 → 0.4
   ambEl.style.opacity = dim;
   glowEl.style.opacity = 0.55 - t * 0.3;           // glow też ciszej nad tekstem (0.55 → 0.25)
+  // sygnał scrolla (mobile) znika po ruszeniu z miejsca — spełnił rolę
+  const moved = scrollY > 40;
+  cueEl.classList.toggle('hide', moved);
+  veilEl.classList.toggle('hide', moved);
 }
 addEventListener('scroll', onScroll, { passive:true });
 onScroll();
@@ -619,26 +662,26 @@ addEventListener('mousemove', e => {
 const I18N = {
   en: {
     navAbout:'About', cta:'Get the book', ctaGhost:'Meet Sansit&nbsp;↓', song:'Sansit Song',
-    freeGift:'🎨 Free printable coloring page — grab yours ↓',
+    freeGift:'Free printable coloring page — download ↓',
     toast:'🎵 Sansit’s song is coming soon!',
     stripHint:'← swipe through the emotions →',
     heroH1:'Meet Sansit — feelings have colors!',
-    heroP:'An illustrated book to read <em>and</em> color — a little visitor from far away learning what emotions are, exactly like your child.',
+    heroP:'An illustrated book to read and color — a little visitor from far away learning what emotions are, exactly like your child.',
     bkPrice:'$9.99 · on Amazon',
     bkH:'Sansit: Joy — 24 pages',
-    bkP:'Every scene tells a piece of the story — and invites your child to color it in. Joy glows gold, and they see it before anyone names it.',
-    bkF1:'Story + coloring<small>A full-color scene, and right beside it the same one ready for crayons.</small>',
-    bkF2:'Activities inside<small>Three mini-activities with Sansit’s backpack, a maze and a mandala.</small>',
-    bkF3:'Made for little hands<small>For ages 4–5 · 8.5 × 8.5" format.</small>',
+    bkP:'Every scene tells a piece of the story — and invites your child to color it in. Your child lives the emotion, then gives it a color of their own.',
+    bkF1:'Story + coloring<small>Full-color scenes with elements ready for crayons.</small>',
+    bkF2:'Activities inside<small>Three mini-activities with Sansit’s backpack.</small>',
+    bkF3:'Made for little hands<small>For ages 4–5 · handy 8.5 × 8.5" square.</small>',
     ab1H:'Before a child can name emotions — they already feel them.',
-    ab1P:'Joy, anger, sadness, curiosity. Little children feel them with tremendous force, often long before they find the words for them. And we, the grown-ups, don’t always know how to help them understand.',
+    ab1P:'Joy, anger, sadness, fear. Little children feel them with tremendous force, often long before they find the words for them. And we, the grown-ups, don’t always know how to help them understand.',
     ab1L:'That’s exactly why Sansit came to be.',
     ab2H:'Meet Sansit.',
-    ab2P1:'Sansit is a little visitor from very far away who is only just learning what emotions are — exactly like your child. Whenever he feels something, his antennae and the stone in his backpack change color. <span class="gold">Joy glows gold.</span> Every emotion has its own shade.',
-    ab2P2:'That way a child can <strong>see</strong> an emotion before anyone names it — and learns to recognize feelings the way children learn best: through color, play and a shared story, not through explanations.',
+    ab2P1:'Sansit is a little visitor from very far away who is only just learning what emotions are — exactly like your child. Whenever he feels something, his antennae and his emotion stone change color. <span class="joy-accent">Joy glows like sunshine.</span> Every emotion has its own shade.',
+    ab2P2:'That way a child can <strong>see</strong> an emotion before anyone names it — and learns to recognize feelings the way children learn best: through color, play and a shared story.',
     ab2C:'Sansit doesn’t lecture. Sansit feels together with your child.',
     ab3H:'Joy is just the beginning.',
-    ab3P:'The first book — <em>Sansit: Joy</em> — is all about joy. But Sansit is only starting his journey through the world of feelings. Ahead of him: curiosity, sadness, anger and many more emotions — each with its own color, its own story, its own lesson.',
+    ab3P:'The first book — <em>Sansit: Joy</em> — is all about joy. But Sansit is only starting his journey through the world of feelings. Ahead of him: anger, sadness, fear and many more emotions — each with its own color and its own story.',
     ab4H:'Where Sansit came from.',
     ab4P1:'Behind Sansit is Sandra — a psychologist who helps children make friends with their emotions every day. It was in conversations with her that the idea was born: to turn all of that into something a child can hold, color and feel.',
     ab4P2:'Sandra watched over every scene, every emotion and every word — so that Sansit doesn’t just entertain, but truly helps. Her trace is even hidden in Sansit’s very name.',
@@ -646,26 +689,26 @@ const I18N = {
   },
   pl: {
     navAbout:'O Sansicie', cta:'Kup książkę', ctaGhost:'Poznaj Sansita&nbsp;↓', song:'Piosenka Sansita',
-    freeGift:'🎨 Darmowa kolorowanka do druku — złap swoją ↓',
+    freeGift:'Darmowa kolorowanka do druku — pobierz ↓',
     toast:'🎵 Piosenka Sansita — już wkrótce!',
     stripHint:'← przewiń przez emocje →',
     heroH1:'Poznaj Sansita — emocje mają kolory!',
-    heroP:'Ilustrowana książka do czytania <em>i</em> kolorowania — mały przybysz z daleka, który dopiero uczy się, czym są emocje, zupełnie jak Twoje dziecko.',
+    heroP:'Ilustrowana książka do czytania i kolorowania — mały przybysz z daleka, który dopiero uczy się, czym są emocje, zupełnie jak Twoje dziecko.',
     bkPrice:'$9.99 · na Amazon',
     bkH:'Sansit: Joy — 24 strony',
-    bkP:'Każda scena opowiada kawałek historii — i od razu zaprasza do pokolorowania. Radość świeci złotem, a Ty widzisz to, zanim ktokolwiek ją nazwie.',
-    bkF1:'Historia + kolorowanie<small>Pełnokolorowa scena, a obok ta sama gotowa pod kredkę.</small>',
-    bkF2:'Aktywności w środku<small>Trzy mikroaktywności z plecakiem Sansita, labirynt i mandala.</small>',
-    bkF3:'Dla małych rąk<small>Dla dzieci 4–5 lat · format 8,5 × 8,5".</small>',
+    bkP:'Każda scena opowiada kawałek historii — i od razu zaprasza do pokolorowania. Dziecko przeżywa emocję, a potem nadaje jej własny kolor.',
+    bkF1:'Historia + kolorowanie<small>Pełnokolorowe sceny z elementami pod kredkę.</small>',
+    bkF2:'Aktywności w środku<small>Trzy mikroaktywności z plecakiem Sansita.</small>',
+    bkF3:'Dla małych rąk<small>Dla dzieci 4–5 lat · kwadrat ~21,5 × 21,5 cm, poręczny — zabierzesz wszędzie.</small>',
     ab1H:'Zanim dziecko nauczy się nazywać emocje — już je czuje.',
-    ab1P:'Radość, złość, smutek, ciekawość. Małe dziecko przeżywa je z ogromną siłą, często zanim znajdzie na nie słowa. A my, dorośli, nie zawsze wiemy, jak mu pomóc je zrozumieć.',
+    ab1P:'Radość, złość, smutek, strach. Małe dziecko przeżywa je z ogromną siłą, często zanim znajdzie na nie słowa. A my, dorośli, nie zawsze wiemy, jak mu pomóc je zrozumieć.',
     ab1L:'Sansit powstał właśnie po to.',
     ab2H:'Poznaj Sansita.',
-    ab2P1:'Sansit to mały przybysz z bardzo daleka, który dopiero uczy się, czym są emocje — zupełnie jak Twoje dziecko. Kiedy coś czuje, jego czułki i kamień w plecaku zmieniają kolor. <span class="gold">Radość świeci złotem.</span> Każda emocja ma swój odcień.',
-    ab2P2:'Dzięki temu dziecko <strong>widzi</strong> emocję, zanim ktokolwiek ją nazwie. Uczy się ją rozpoznawać tak, jak dzieci uczą się najlepiej — przez kolor, zabawę i wspólną historię, a nie przez tłumaczenie.',
-    ab2C:'Sansit nie wykłada. Sansit czuje razem z dzieckiem.',
+    ab2P1:'Sansit to mały przybysz z bardzo daleka, który dopiero uczy się, czym są emocje — zupełnie jak Twoje dziecko. Kiedy coś czuje, jego czułki i kamień emocji zmieniają kolor. <span class="joy-accent">Radość świeci jak słońce.</span> Każda emocja ma swoją barwę.',
+    ab2P2:'Dzięki temu dziecko <strong>widzi</strong> emocję, zanim ktokolwiek ją nazwie. Uczy się ją rozpoznawać tak, jak dzieci uczą się najlepiej — przez kolor, zabawę i wspólną historię.',
+    ab2C:'Sansit nie poucza. Sansit czuje razem z dzieckiem.',
     ab3H:'Radość to dopiero początek.',
-    ab3P:'Pierwsza książka — <em>Sansit: Joy</em> — opowiada o radości. Ale Sansit dopiero zaczyna swoją podróż przez świat uczuć. Przed nim jeszcze ciekawość, smutek, złość i wiele innych emocji — każda ze swoim kolorem, swoją historią i swoją lekcją.',
+    ab3P:'Pierwsza książka — <em>Sansit: Joy</em> — opowiada o radości. Ale Sansit dopiero zaczyna swoją podróż przez świat uczuć. Przed nim jeszcze złość, smutek, strach i wiele innych emocji — każda ze swoim kolorem i swoją historią.',
     ab4H:'Skąd wziął się Sansit.',
     ab4P1:'Za Sansitem stoi Sandra — psycholożka, która na co dzień pomaga dzieciom oswajać emocje. To z rozmów z nią narodził się pomysł, żeby zrobić z tego coś, co dziecko może wziąć do ręki, pokolorować i poczuć.',
     ab4P2:'Sandra czuwała nad każdą sceną, każdą emocją i każdym słowem — tak, żeby Sansit nie tylko bawił, ale i naprawdę pomagał. A jej ślad jest nawet w samym imieniu Sansita.',
@@ -676,16 +719,19 @@ let lang = 'en';
 // ————— Galeria emocji (wybór 2026-07-16) — podpis TYLKO w aktywnym języku —————
 // 07-18: dla rynku US polskie podpisy były bezużyteczne (dwujęzyczna „przekładka"
 // ładna graficznie, ale myląca) → karta pokazuje jeden język, przełącza się z EN|PL.
+// Kolejność (07-19): 4 podstawowe emocje na przód (jak w ab1P: radość, złość, smutek,
+// strach), środek dalej, a karty BEZ tła (ciekawość, spokój) na koniec — żeby niespójne
+// tła kafelków nie kłuły od razu na wejściu. Docelowo tła do ujednolicenia (re-export).
 const EMOTIONS = [
   ['radosc-joy2.png', 'Radość', 'Joy'],
-  ['ciekawosc-curiosity1.png', 'Ciekawość', 'Curiosity'],
-  ['smutek-sad5.png', 'Smutek', 'Sadness'],
   ['zlosc-anger2.png', 'Złość', 'Anger'],
+  ['smutek-sad5.png', 'Smutek', 'Sadness'],
   ['strach-fear3-ok.png', 'Strach', 'Fear'],
   ['niechec-disgust2.png', 'Niechęć', 'Disgust'],
   ['zaskoczenie-surprised2.png', 'Zaskoczenie', 'Surprise'],
-  ['spokoj-calm1.png', 'Spokój', 'Calm'],
   ['frustracja3.png', 'Frustracja', 'Frustration'],
+  ['ciekawosc-curiosity1.png', 'Ciekawość', 'Curiosity'],
+  ['spokoj-calm1.png', 'Spokój', 'Calm'],
 ];
 function renderStrip(l) {
   document.getElementById('strip').innerHTML = EMOTIONS.map(([f, pl, en]) => {
@@ -705,37 +751,37 @@ const SURVEY_ENDPOINT = 'https://qubatura.eu/send-sansit.php';   // TODO wiring 
 const PDF_URL = 'book/sansit-coloring.pdf';                       // TODO: PDF z OpenArt (Kuba)
 const SURVEY = {
   en: {
-    kicker:'Free coloring page 🎨',
+    kicker:'Free coloring page',
     h:'Already have Sansit?',
     sub:'Three quick taps — and a coloring page is yours.',
     qs:[
-      { q:'Do you feel Sansit is more than an ordinary coloring book?', a:['Absolutely ✨','A little','Not really'] },
+      { q:'Do you feel Sansit is more than an ordinary coloring book?', a:['Absolutely','A little','Not really'] },
       { q:'Does your child ask about more Sansit stories?',              a:['Yes, often','Sometimes','Not yet'] },
       { q:'The price of the book feels…',                               a:['Just right','A bit high','I’d pay more'] },
     ],
-    thanksH:'Thank you! 💜', thanksP:'Here’s your Sansit coloring page.',
+    thanksH:'Thank you!', thanksP:'Here’s your Sansit coloring page.',
     download:'Download coloring page ↓',
     emailQ:'Want to hear when the next Sansit stories arrive?',
     emailPh:'your@email.com',
     consent:'I agree to receive occasional Sansit news. ', consentLink:'Privacy',
-    save:'Keep me posted', savedH:'You’re on the list 🎉',
+    save:'Keep me posted', savedH:'You’re on the list',
     savedP:'We’ll let you know when the next Sansit lands.', back:'‹ back',
   },
   pl: {
-    kicker:'Darmowa kolorowanka 🎨',
+    kicker:'Darmowa kolorowanka',
     h:'Masz już Sansita?',
     sub:'Trzy szybkie kliknięcia — i kolorowanka jest Twoja.',
     qs:[
-      { q:'Czujesz, że Sansit to coś więcej niż zwykła kolorowanka?', a:['Zdecydowanie ✨','Trochę','Nie bardzo'] },
+      { q:'Czujesz, że Sansit to coś więcej niż zwykła kolorowanka?', a:['Zdecydowanie','Trochę','Nie bardzo'] },
       { q:'Czy dziecko dopytuje o kolejne historie Sansita?',         a:['Tak, często','Czasem','Jeszcze nie'] },
       { q:'Cena książki jest…',                                       a:['W sam raz','Trochę za wysoka','Dałbym więcej'] },
     ],
-    thanksH:'Dziękujemy! 💜', thanksP:'Oto Twoja kolorowanka Sansita.',
+    thanksH:'Dziękujemy!', thanksP:'Oto Twoja kolorowanka Sansita.',
     download:'Pobierz kolorowankę ↓',
     emailQ:'Chcesz wiedzieć, gdy pojawią się kolejne historie Sansita?',
     emailPh:'twoj@email.com',
     consent:'Zgadzam się na okazjonalne wieści o Sansicie. ', consentLink:'Prywatność',
-    save:'Dawajcie znać', savedH:'Jesteś na liście 🎉',
+    save:'Dawajcie znać', savedH:'Jesteś na liście',
     savedP:'Damy znać, gdy pojawi się kolejny Sansit.', back:'‹ wróć',
   },
 };
