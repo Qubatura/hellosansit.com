@@ -64,12 +64,12 @@
   #logoPulse {
     position:absolute; left:72%; top:26%; width:30%; aspect-ratio:1;
     transform:translate(-50%,-50%); border-radius:50%; pointer-events:none;
-    background:radial-gradient(circle, rgba(224,95,208,.50) 0%, rgba(224,95,208,.16) 45%, transparent 68%);
-    animation:logoPulse 2.6s ease-in-out infinite;
+    background:radial-gradient(circle, rgba(224,95,208,.64) 0%, rgba(224,95,208,.24) 45%, transparent 72%);
+    animation:logoPulse 2.3s ease-in-out infinite;
   }
   @keyframes logoPulse {
-    0%,100% { transform:translate(-50%,-50%) scale(.75); opacity:.45; }
-    50%     { transform:translate(-50%,-50%) scale(1.25); opacity:1; }
+    0%,100% { transform:translate(-50%,-50%) scale(.7); opacity:.5; }
+    50%     { transform:translate(-50%,-50%) scale(1.42); opacity:1; }
   }
   .logo-tm { position:absolute; left:95%; top:30%; font-size:9px; font-weight:800; color:var(--ink-soft); }
   /* ——— ukryte wejście do gry (07-19): kulka z logo = „kamień emocji" = drzwi do gry.
@@ -81,8 +81,8 @@
   }
   .logo-wrap .game-door:hover { background:radial-gradient(circle, rgba(224,95,208,.32), transparent 70%); }
   .logo-wrap .game-tag {
-    position:absolute; left:72%; top:100%; transform:translateX(-50%);
-    font:800 8px/1 'Nunito','Segoe UI',sans-serif; letter-spacing:1.6px;
+    position:absolute; left:72%; top:90%; transform:translateX(-50%);
+    font:800 9.5px/1 'Nunito','Segoe UI',sans-serif; letter-spacing:1.4px;
     color:var(--violet); pointer-events:none; white-space:nowrap; opacity:0;
     animation:gameTag 6.5s ease-in-out infinite;
   }
@@ -913,6 +913,10 @@ function svSaveEmail(email) {
 function setLang(l) {
   lang = l;
   document.documentElement.lang = l;
+  // przekaż język do gry (osobna strona /gra/): localStorage + ?lang w linku-kulce
+  try { localStorage.setItem('sansit_lang', l); } catch(e) {}
+  const gd = document.querySelector('.game-door');
+  if (gd) gd.href = 'gra/?lang=' + l;
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const t = I18N[l][el.dataset.i18n];
     if (t !== undefined) el.innerHTML = t;
