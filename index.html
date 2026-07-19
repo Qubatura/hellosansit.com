@@ -72,6 +72,27 @@
     50%     { transform:translate(-50%,-50%) scale(1.25); opacity:1; }
   }
   .logo-tm { position:absolute; left:95%; top:30%; font-size:9px; font-weight:800; color:var(--ink-soft); }
+  /* ——— ukryte wejście do gry (07-19): kulka z logo = „kamień emocji" = drzwi do gry.
+     Wskazówka z klasą: mikro-napis „game" delikatnie POJAWIA SIĘ i ZNIKA przy kulce. ——— */
+  .logo-wrap .game-door {
+    position:absolute; left:72%; top:26%; width:40px; height:40px;
+    transform:translate(-50%,-50%); border-radius:50%; z-index:4; cursor:pointer;
+    transition:background .2s ease;
+  }
+  .logo-wrap .game-door:hover { background:radial-gradient(circle, rgba(224,95,208,.32), transparent 70%); }
+  .logo-wrap .game-tag {
+    position:absolute; left:72%; top:100%; transform:translateX(-50%);
+    font:800 8px/1 'Nunito','Segoe UI',sans-serif; letter-spacing:1.6px;
+    color:var(--violet); pointer-events:none; white-space:nowrap; opacity:0;
+    animation:gameTag 6.5s ease-in-out infinite;
+  }
+  @keyframes gameTag {
+    0%,72% { opacity:0; transform:translateX(-50%) translateY(2px); }
+    82%,92% { opacity:.9; transform:translateX(-50%) translateY(0); }
+    100% { opacity:0; transform:translateX(-50%) translateY(2px); }
+  }
+  .logo-wrap .game-door:hover ~ .game-tag { opacity:.95; animation:none; transform:translateX(-50%); }
+  @media (prefers-reduced-motion:reduce) { .logo-wrap .game-tag { animation:none; opacity:.5; } }
   header .right { display:flex; gap:26px; align-items:center; font-size:13px; font-weight:700; color:var(--ink-soft); letter-spacing:.5px; }
   header .right span, header .right a { cursor:pointer; color:var(--ink-soft); text-decoration:none; transition:color .15s ease; }
   header .right span:hover, header .right a:hover { color:var(--violet); }
@@ -379,6 +400,8 @@
   <span class="logo-wrap">
     <img src="logo/LOGO_header.png" alt="SANSIT">
     <i id="logoPulse"></i>
+    <a class="game-door" href="gra/" aria-label="Ukryta gra Sansita" title="psst… zagraj"></a>
+    <span class="game-tag" aria-hidden="true">game</span>
     <span class="logo-tm">™</span>
   </span>
   <div class="right">
