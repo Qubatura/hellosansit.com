@@ -21,7 +21,7 @@
     padding:8px 16px; font-weight:800; font-size:15px; box-shadow:0 4px 14px rgba(90,70,100,.12);
     display:flex; align-items:center; gap:7px; }
   .hud .pill small { font-weight:700; color:var(--ink-soft); font-size:12px; }
-  #timePill.pen { animation:penFlash .5s ease; }
+  #movePill.pen { animation:penFlash .5s ease; }
   @keyframes penFlash { 0%{ background:#ffe0dc; } 100%{ background:rgba(255,255,255,.82); } }
   #exitBtn { pointer-events:auto; cursor:pointer; width:42px; height:42px; border-radius:50%;
     background:rgba(255,255,255,.82); backdrop-filter:blur(4px); border:none; font-size:19px; color:var(--ink-soft);
@@ -68,9 +68,10 @@
   .nameRow input:focus { border-color:var(--violet); }
   .nameRow button { background:var(--joy); color:#4a3a12; border:none; border-radius:999px;
     padding:0 22px; font-family:inherit; font-weight:900; font-size:15px; cursor:pointer; }
-  .bigtime { font-size:34px; font-weight:900; color:var(--violet); font-variant-numeric:tabular-nums;
+  .bigtime { font-size:40px; font-weight:900; color:var(--violet); font-variant-numeric:tabular-nums;
     letter-spacing:-.5px; margin-top:2px; }
-  .bigtime small { font-size:15px; font-weight:800; color:var(--ink-soft); }
+  .bigtime small { font-size:16px; font-weight:800; color:var(--ink-soft); }
+  #winStats { color:var(--ink-soft); font-weight:800; font-size:14px; font-variant-numeric:tabular-nums; margin-top:1px; }
 </style>
 </head>
 <body>
@@ -78,7 +79,10 @@
   <canvas id="cv"></canvas>
   <div class="hud">
     <div class="pill"><span id="trackIcon">🧩</span> <b id="trackName">—</b> <small id="prog"></small></div>
-    <div class="pill" id="timePill">⏱ <b id="timeVal">0:00</b></div>
+    <div style="display:flex; gap:10px; align-items:center">
+      <div class="pill" id="timePill">⏱ <b id="timeVal">0:00</b></div>
+      <div class="pill" id="movePill"><b id="moveVal">0</b> <small>ruchy</small></div>
+    </div>
     <button id="exitBtn" title="Wyjdź">✕</button>
   </div>
   <div class="caption" id="caption">Stukaj kryształy — odlatują, jeśli mają wolną drogę</div>
@@ -105,7 +109,7 @@
         <figcaption class="no">coś blokuje = zostaje</figcaption>
       </figure>
     </div>
-    <p style="font-size:13.5px">Czas leci — kto uwolni emocje najszybciej? Kto gra?</p>
+    <p style="font-size:13.5px">Liczy się czas <b>i</b> ruchy — im szybciej i czyściej, tym więcej punktów. Kto gra?</p>
     <div style="display:flex; gap:14px; flex-wrap:wrap; justify-content:center; margin-top:8px">
       <button class="btn" data-track="child">👶 Dziecko</button>
       <button class="btn ghost" data-track="adult">🧑 Rodzic</button>
@@ -116,11 +120,12 @@
   <!-- WIN (finał ścieżki) -->
   <div class="panel hidden" id="winPanel">
     <h1 id="winH">🌟 Wszystkie emocje uwolnione!</h1>
-    <div class="bigtime" id="winTime">0:00</div>
+    <div class="bigtime" id="winScore">0 <small>pkt</small></div>
+    <div id="winStats">Czas 0:00 · 0 ruchów</div>
     <p id="winP" style="margin-top:2px">Czułki Sansita znów świecą pełnym kolorem.</p>
     <div class="lb" id="lbList"></div>
     <div class="nameRow" id="nameRow" style="display:none">
-      <input id="nameInput" maxlength="12" placeholder="Twoje imię" autocomplete="off">
+      <input id="nameInput" maxlength="5" placeholder="Imię (5)" autocomplete="off">
       <button id="saveName">Zapisz</button>
     </div>
     <button class="btn" id="againBtn">Zagraj jeszcze raz ▸</button>
@@ -159,6 +164,10 @@ const TRACKS={
   {cols:6,rows:6,sansit:[3,2],pieces:[{r:2,c:2,dir:'L',emo:5},{r:0,c:4,dir:'D',emo:3},{r:2,c:4,dir:'D',emo:2},{r:5,c:5,dir:'U',emo:2},{r:1,c:2,dir:'R',emo:0},{r:0,c:2,dir:'U',emo:4},{r:5,c:4,dir:'L',emo:1},{r:3,c:4,dir:'R',emo:2},{r:5,c:0,dir:'U',emo:0},{r:4,c:0,dir:'U',emo:4},{r:3,c:0,dir:'L',emo:3},{r:2,c:0,dir:'U',emo:0},{r:3,c:1,dir:'D',emo:4},{r:1,c:4,dir:'R',emo:0},{r:1,c:3,dir:'U',emo:1},{r:3,c:5,dir:'U',emo:2},{r:0,c:0,dir:'L',emo:3}]},
   {cols:7,rows:7,sansit:[3,3],pieces:[{r:2,c:5,dir:'U',emo:4},{r:0,c:5,dir:'R',emo:5},{r:0,c:0,dir:'U',emo:4},{r:0,c:3,dir:'U',emo:3},{r:1,c:5,dir:'R',emo:5},{r:1,c:2,dir:'D',emo:4},{r:5,c:3,dir:'R',emo:2},{r:3,c:5,dir:'R',emo:3},{r:2,c:2,dir:'D',emo:3},{r:4,c:2,dir:'D',emo:2},{r:3,c:6,dir:'U',emo:3},{r:4,c:5,dir:'D',emo:0},{r:1,c:6,dir:'U',emo:3},{r:3,c:2,dir:'L',emo:0},{r:6,c:2,dir:'R',emo:3},{r:3,c:1,dir:'U',emo:4},{r:5,c:6,dir:'D',emo:1},{r:6,c:5,dir:'R',emo:4},{r:6,c:6,dir:'R',emo:3},{r:0,c:6,dir:'U',emo:5}]},
   {cols:7,rows:7,sansit:[3,3],pieces:[{r:5,c:3,dir:'L',emo:4},{r:2,c:4,dir:'D',emo:5},{r:3,c:4,dir:'D',emo:3},{r:0,c:4,dir:'L',emo:2},{r:1,c:3,dir:'L',emo:0},{r:2,c:2,dir:'U',emo:3},{r:0,c:2,dir:'U',emo:2},{r:3,c:2,dir:'L',emo:1},{r:0,c:3,dir:'U',emo:3},{r:5,c:6,dir:'D',emo:3},{r:6,c:4,dir:'R',emo:0},{r:6,c:5,dir:'U',emo:3},{r:6,c:2,dir:'L',emo:0},{r:6,c:1,dir:'U',emo:4},{r:5,c:1,dir:'U',emo:3},{r:6,c:0,dir:'U',emo:0},{r:4,c:5,dir:'L',emo:4},{r:6,c:6,dir:'R',emo:0},{r:0,c:1,dir:'L',emo:2},{r:2,c:1,dir:'L',emo:0},{r:4,c:4,dir:'L',emo:1},{r:4,c:2,dir:'L',emo:5},{r:1,c:0,dir:'U',emo:0}]},
+  // poziom 6 i 7 (07-19) — „szczęśliwa 7". 7×7, 25 i 28 kryształów, konstrukcja wsteczna
+  // + zweryfikowane solverem (scratchpad gen_levels.js). Progresja: 11→15→17→20→23→25→28.
+  {cols:7,rows:7,sansit:[3,3],pieces:[{r:3,c:1,dir:'U',emo:1},{r:1,c:2,dir:'U',emo:4},{r:4,c:6,dir:'U',emo:1},{r:4,c:0,dir:'D',emo:1},{r:0,c:1,dir:'U',emo:2},{r:6,c:2,dir:'D',emo:3},{r:0,c:3,dir:'U',emo:4},{r:1,c:6,dir:'U',emo:4},{r:4,c:4,dir:'D',emo:4},{r:5,c:5,dir:'U',emo:1},{r:5,c:6,dir:'D',emo:2},{r:5,c:0,dir:'L',emo:1},{r:2,c:4,dir:'L',emo:3},{r:0,c:4,dir:'U',emo:5},{r:4,c:3,dir:'D',emo:4},{r:6,c:1,dir:'L',emo:5},{r:6,c:0,dir:'L',emo:3},{r:0,c:0,dir:'L',emo:2},{r:1,c:0,dir:'L',emo:2},{r:3,c:4,dir:'R',emo:1},{r:3,c:0,dir:'L',emo:4},{r:0,c:5,dir:'R',emo:2},{r:2,c:3,dir:'L',emo:5},{r:3,c:5,dir:'R',emo:3},{r:0,c:2,dir:'U',emo:0}]},
+  {cols:7,rows:7,sansit:[3,3],pieces:[{r:1,c:1,dir:'L',emo:2},{r:4,c:1,dir:'L',emo:4},{r:3,c:6,dir:'D',emo:1},{r:3,c:2,dir:'U',emo:1},{r:0,c:4,dir:'D',emo:4},{r:0,c:3,dir:'L',emo:0},{r:0,c:1,dir:'L',emo:3},{r:6,c:6,dir:'D',emo:1},{r:0,c:0,dir:'L',emo:0},{r:1,c:5,dir:'U',emo:3},{r:3,c:4,dir:'D',emo:0},{r:6,c:4,dir:'L',emo:5},{r:4,c:3,dir:'R',emo:3},{r:6,c:2,dir:'D',emo:2},{r:5,c:6,dir:'L',emo:3},{r:2,c:4,dir:'L',emo:0},{r:5,c:0,dir:'L',emo:3},{r:5,c:1,dir:'D',emo:0},{r:2,c:0,dir:'L',emo:4},{r:5,c:5,dir:'D',emo:4},{r:4,c:4,dir:'R',emo:5},{r:6,c:1,dir:'L',emo:0},{r:3,c:0,dir:'L',emo:2},{r:4,c:0,dir:'L',emo:3},{r:6,c:3,dir:'D',emo:2},{r:2,c:5,dir:'R',emo:4},{r:1,c:2,dir:'U',emo:5},{r:4,c:6,dir:'R',emo:1}]},
  ],
 };
 const META={ child:{icon:'👶',name:'Dziecko',penalty:false}, adult:{icon:'🧑',name:'Rodzic',penalty:true} };
@@ -170,8 +179,12 @@ const DIRV={U:[-1,0],D:[1,0],L:[0,-1],R:[0,1]};
 let lvlIdx=0, pieces=[], sansitCell=null, cols=3, rows=3;
 let anims=[], freed=false, freeT=0, W=0,H=0,DPR=1, ox=0,oy=0,cell=0, pulse=0;
 let advancing=false, flashes=[];
-// ——— czas przez CAŁĄ ścieżkę ———
-let running=false, tStart=0, penalty=0, finalMs=0;
+// ——— czas przez CAŁĄ ścieżkę + ruchy ———
+// Punkty (07-19) = round(100000 / (czas_s + ruchy)). Minimum ruchów = liczba kryształów
+// (każdy raz stuknięty); każdy zły klik = +1 ruch. Kara czasowa +3s SKASOWANA — pomyłki
+// bolą przez ruchy (i realne sekundy). Czas zostaje czysty. Tablica rankuje po PUNKTACH.
+let running=false, tStart=0, penalty=0, finalMs=0, moves=0;
+function scoreOf(ms, mv){ return Math.max(1, Math.round(100000 / (ms/1000 + mv))); }
 
 function nowMs(){ return performance.now(); }
 function elapsedMs(){ return running ? (nowMs()-tStart)+penalty*1000 : finalMs; }
@@ -211,23 +224,20 @@ function pathClear(p){
   return true;
 }
 function tryTap(px,py){
-  if(freed||advancing) return;
+  if(freed||advancing||!running) return;
   const c=Math.floor((px-ox)/cell), r=Math.floor((py-oy)/cell);
   const p=pieces.find(p=>p.r===r && p.c===c);
-  if(!p){ return; }
+  if(!p){ return; }               // pusto = niecelny dotyk, nie liczymy jako ruch
+  moves++;                        // trafienie w kryształ (wolny LUB zablokowany) = ruch
+  document.getElementById('moveVal').textContent=moves;
   if(pathClear(p)){
     pieces=pieces.filter(x=>x!==p);
     anims.push({...p, t:0});
     if(pieces.length===0){ onLevelCleared(); }
   } else {
-    p.shake=1;  // zablokowany — drgnięcie
-    // KARA tylko dla rodzica (u dziecka bez presji)
-    if(META[curKey].penalty && running){
-      penalty+=PENALTY_S;
-      flashes.push({x:px, y:py, t:0, txt:'+'+PENALTY_S+'s'});
-      const tp=document.getElementById('timePill');
-      tp.classList.remove('pen'); void tp.offsetWidth; tp.classList.add('pen');
-    }
+    p.shake=1;                    // zablokowany — tylko drgnięcie (zły klik kosztuje ruch)
+    const mp=document.getElementById('movePill');
+    mp.classList.remove('pen'); void mp.offsetWidth; mp.classList.add('pen');
   }
 }
 function onLevelCleared(){
@@ -240,7 +250,7 @@ function onLevelCleared(){
 }
 function finishTrack(){
   running=false; finalMs=elapsedMs();
-  showWin(finalMs);
+  showWin(finalMs, moves, scoreOf(finalMs, moves));
 }
 
 // ——— leaderboard (localStorage, top 3 per ścieżka) ———
@@ -251,23 +261,20 @@ function lbGet(key){
 function lbSave(key, arr){
   try { localStorage.setItem(LB_KEY+key, JSON.stringify(arr.slice(0,3))); } catch(e){}
 }
-function lbRank(key, ms){
-  // zwraca pozycję 0..2 jeśli wynik łapie się w top3, inaczej -1
+function lbRank(key, points){
+  // pozycja 0..2 jeśli wynik łapie się w top3 (wyżej punktów = lepiej), inaczej -1
   const arr=lbGet(key);
-  if(arr.length<3) { // policz gdzie wejdzie
-    let pos=arr.filter(e=>e.ms<=ms).length; return pos<3?pos:-1;
-  }
-  let pos=arr.filter(e=>e.ms<=ms).length;
+  const pos=arr.filter(e=>e.points>points).length;   // ilu ma WIĘCEJ punktów ode mnie
   return pos<3?pos:-1;
 }
-function renderLB(key, highlightMs){
+function renderLB(key, highlightPts){
   const arr=lbGet(key); const box=document.getElementById('lbList');
   const medals=['🥇','🥈','🥉']; let html='';
   for(let i=0;i<3;i++){
     const e=arr[i];
     if(e){
-      const me = highlightMs!=null && e.ms===highlightMs ? ' me':'';
-      html+=`<div class="r${me}"><span class="medal">${medals[i]}</span><span class="nm">${esc(e.name)}</span><span class="tm">${fmtTime(e.ms)}</span></div>`;
+      const me = highlightPts!=null && e.points===highlightPts ? ' me':'';
+      html+=`<div class="r${me}"><span class="medal">${medals[i]}</span><span class="nm">${esc(e.name)}</span><span class="tm">${e.points} pkt</span></div>`;
     } else {
       html+=`<div class="r empty"><span class="medal">${medals[i]}</span><span class="nm">—</span></div>`;
     }
@@ -368,22 +375,24 @@ cv.addEventListener('touchstart', e=>{ e.preventDefault(); const [x,y]=pt(e); tr
 // ——— stany ———
 function play(key){
   curKey=key; curTrack=TRACKS[key]; lvlIdx=0;
-  penalty=0; finalMs=0; tStart=nowMs(); running=true;   // start timera całej ścieżki
+  penalty=0; finalMs=0; moves=0; tStart=nowMs(); running=true;   // start timera całej ścieżki
+  document.getElementById('moveVal').textContent='0';
   document.getElementById('startPanel').classList.add('hidden');
   document.getElementById('winPanel').classList.add('hidden');
   loadLevel(0);
 }
-function showWin(ms){
+function showWin(ms, mv, points){
   document.getElementById('winH').textContent='🌟 Wszystkie emocje uwolnione!';
-  document.getElementById('winTime').innerHTML=fmtTime(ms)+' <small>'+(META[curKey].penalty?'(z karami)':'')+'</small>';
+  document.getElementById('winScore').innerHTML=points+' <small>pkt</small>';
+  document.getElementById('winStats').textContent=`Czas ${fmtTime(ms)} · ${mv} ruchów`;
   document.getElementById('winP').textContent='Czułki Sansita znów świecą pełnym kolorem.';
   // leaderboard + ew. wpis imienia
-  const rank=lbRank(curKey, ms);
+  const rank=lbRank(curKey, points);
   const nameRow=document.getElementById('nameRow');
   if(rank>=0){
     document.getElementById('winP').textContent=`Nowy rekord — ${rank+1}. miejsce! Wpisz imię na tablicę.`;
     nameRow.style.display='flex';
-    nameRow.dataset.ms=ms;
+    nameRow.dataset.points=points; nameRow.dataset.ms=ms; nameRow.dataset.moves=mv;
     renderLB(curKey, null);
     setTimeout(()=>document.getElementById('nameInput').focus(),50);
   } else {
@@ -394,14 +403,15 @@ function showWin(ms){
 }
 function commitName(){
   const inp=document.getElementById('nameInput');
-  const name=(inp.value||'').trim().slice(0,12) || 'Gracz';
-  const ms=Number(document.getElementById('nameRow').dataset.ms);
+  const name=(inp.value||'').trim().slice(0,5) || 'Gracz';
+  const nr=document.getElementById('nameRow');
+  const points=Number(nr.dataset.points), ms=Number(nr.dataset.ms), mv=Number(nr.dataset.moves);
   const arr=lbGet(curKey);
-  arr.push({name, ms});
-  arr.sort((a,b)=>a.ms-b.ms);
+  arr.push({name, points, ms, moves:mv});
+  arr.sort((a,b)=>b.points-a.points);   // wyżej punktów = wyżej na tablicy
   lbSave(curKey, arr);
-  document.getElementById('nameRow').style.display='none';
-  renderLB(curKey, ms);
+  nr.style.display='none';
+  renderLB(curKey, points);
 }
 function quit(){
   running=false;
@@ -409,6 +419,7 @@ function quit(){
   document.getElementById('startPanel').classList.remove('hidden');
   pieces=[]; sansitCell=null; advancing=false;
   document.getElementById('timeVal').textContent='0:00';
+  document.getElementById('moveVal').textContent='0';
 }
 
 document.querySelectorAll('[data-track]').forEach(b=> b.onclick=()=>play(b.dataset.track));
