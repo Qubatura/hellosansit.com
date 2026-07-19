@@ -328,6 +328,13 @@
   footer a.qg:hover { text-decoration:underline; animation:none; opacity:1; }
   @keyframes qgPulse { 0%,100% { opacity:.6; } 50% { opacity:1; } }
   @media (prefers-reduced-motion:reduce) { footer a.qg { animation:none; opacity:.85; } }
+  /* kontakt (07-19): cicha linijka „gdyby ktoś chciał się odezwać" — nie sekcja, nie formularz */
+  footer .foot-contact { margin-bottom:9px; }
+  footer a.mail {
+    color:var(--ink-soft); text-decoration:none; font-weight:700;
+    border-bottom:1px solid transparent; transition:color .15s ease, border-color .15s ease;
+  }
+  footer a.mail:hover { color:var(--violet); border-bottom-color:var(--violet); }
 
   /* toast „coming soon" (Sansit Song) */
   #toast {
@@ -478,7 +485,10 @@
   <div class="sv-card" id="svCard"><!-- render z JS (svRender), dwujęzycznie --></div>
 </section>
 
-<footer>Sansit™ · made with care by <a class="qg" href="https://qubatura.eu" target="_blank" rel="noopener">Qubatura Group</a></footer>
+<footer>
+  <div class="foot-contact"><a class="mail" href="mailto:hi@hellosansit.com">Say hi: hi@hellosansit.com</a></div>
+  <div>Sansit™ · made with care by <a class="qg" href="https://qubatura.eu" target="_blank" rel="noopener">Qubatura Group</a></div>
+</footer>
 <div id="toast">🎵 Sansit's song is coming soon!</div>
 
 <script>
