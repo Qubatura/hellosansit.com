@@ -170,17 +170,28 @@
   /* kolumna CTA: rząd przycisków + Sansit Song NA CAŁĄ ich szerokość */
   .cta-col { display:inline-flex; flex-direction:column; align-items:stretch; }
   .cta-row { display:flex; gap:14px; }
-  /* Sansit Song — celowo najlżejszy (piosenka w drodze) */
+  /* Sansit Song — lekki mini-odtwarzacz (własna ikona play/pause, czas do końca, pasek) */
   .song-pill {
-    display:flex; align-items:center; justify-content:center; gap:8px; margin-top:14px;
+    position:relative; overflow:hidden;
+    display:inline-flex; align-items:center; justify-content:center; gap:9px; margin-top:14px;
     font-weight:800; font-size:14px; color:var(--ink-soft);
     border:2px dashed rgba(107,47,217,.35); padding:9px 22px; border-radius:999px;
     cursor:pointer; transition:color .15s ease, border-color .15s ease, transform .15s ease;
   }
   .song-pill:hover { color:var(--violet); border-color:var(--violet); transform:translateY(-1px); }
-  /* stan „gra" — wypełniony violet, ramka pełna (był szkic-dashed) */
-  .song-pill.playing { color:#fff; background:var(--violet); border-style:solid; border-color:var(--violet); }
-  .song-pill.playing:hover { color:#fff; }
+  /* stan „gra" — ramka pełna, akcenty violet (jasne tło, by pasek postępu był widoczny) */
+  .song-pill.playing { color:var(--violet); border-style:solid; border-color:var(--violet); }
+  /* ikona play/pause — własny SVG zamiast emoji nutki */
+  .song-ic { width:15px; height:15px; flex:none; display:block; }
+  .song-pill .ic-pause { display:none; }
+  .song-pill.playing .ic-play { display:none; }
+  .song-pill.playing .ic-pause { display:block; }
+  /* czas do końca — pojawia się dopiero, gdy leci */
+  .song-time { font-size:12.5px; font-weight:700; opacity:.7; font-variant-numeric:tabular-nums; }
+  .song-time:empty { display:none; }
+  /* pasek postępu — cienka linia u dołu pilla */
+  .song-prog { position:absolute; left:0; bottom:0; height:3px; width:0;
+    background:var(--violet); transition:width .2s linear; pointer-events:none; }
 
   /* ZACZEPKA lead-magnet (07-18): mały złoty pasek pod hero → smooth-scroll do #survey.
      Discovery darmowej kolorowanki (ankieta była zakopana na dole). Złoto = „prezent". */
@@ -433,7 +444,13 @@
         <a class="cta" href="https://www.amazon.pl/dp/B0H8Z8WJ65" target="_blank" rel="noopener" data-i18n="cta">Get the book</a>
         <a class="cta-ghost" href="#about" data-i18n="ctaGhost">Meet Sansit&nbsp;↓</a>
       </div>
-      <span id="songBtn" class="song-pill">🎵 <span data-i18n="song">Sansit Song</span></span>
+      <span id="songBtn" class="song-pill" role="button" tabindex="0" aria-label="Sansit Song">
+        <svg class="song-ic ic-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.2v13.6L19 12z" fill="currentColor"/></svg>
+        <svg class="song-ic ic-pause" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg>
+        <span class="song-label" data-i18n="song">Sansit Song</span>
+        <span class="song-time" aria-hidden="true"></span>
+        <span class="song-prog" aria-hidden="true"></span>
+      </span>
     </div>
   </div>
 </div>
@@ -941,30 +958,43 @@ musicBtn.addEventListener('click', () => {
   else { theme.pause(); musicBtn.classList.remove('playing'); }
 });
 
-// ————— Sansit Song — piosenka ZA JĘZYKIEM strony (OSOBNY utwór, lazy) —————
-// Na start: samo play/stop. NIE gra równocześnie z muzyką strony (main-theme).
-// Pełny odtwarzacz (pasek postępu itd.) = temat „to dogadamy" — świadomie NIE tutaj.
+// ————— Sansit Song — lekki mini-odtwarzacz ZA JĘZYKIEM strony (OSOBNY utwór, lazy) —————
+// Play/pauza (pozycja utrzymana), czas do końca, pasek postępu. Świadomie BEZ seek/głośności —
+// żeby nie robić z tego pełnego playera. NIE gra równocześnie z muzyką strony (main-theme).
 const songBtn = document.getElementById('songBtn');
+const songTimeEl = songBtn.querySelector('.song-time');
+const songProgEl = songBtn.querySelector('.song-prog');
 let song = null;          // Audio bieżącej piosenki
 let songLang = null;      // język aktualnie wczytanego pliku
 function songSrc(l) { return 'audio/sansit-song-' + l + '.mp3'; }
-function stopSong() { if (song) song.pause(); songBtn.classList.remove('playing'); }
+function fmtTime(s) { s = Math.max(0, Math.round(s)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+function songReset() { songBtn.classList.remove('playing'); songProgEl.style.width = '0%'; songTimeEl.textContent = ''; }
+function bindSong(a) {
+  a.addEventListener('loadedmetadata', () => { if (a.duration) songTimeEl.textContent = '−' + fmtTime(a.duration); });
+  a.addEventListener('timeupdate', () => {
+    if (!a.duration) return;
+    songProgEl.style.width = (a.currentTime / a.duration * 100) + '%';
+    songTimeEl.textContent = '−' + fmtTime(a.duration - a.currentTime); // czas DO KOŃCA
+  });
+  a.addEventListener('ended', songReset);
+}
+function stopSong() { if (song) song.pause(); songBtn.classList.remove('playing'); } // pauza — pozycja zostaje
 function playSong() {
   // wczytaj właściwy język (pierwszy klik albo zmiana języka w trakcie)
   if (!song || songLang !== lang) {
     if (song) song.pause();
     song = new Audio(songSrc(lang));
     songLang = lang;
-    song.addEventListener('ended', () => songBtn.classList.remove('playing'));
+    bindSong(song);
+    songProgEl.style.width = '0%';
   }
-  // nie gramy razem z muzyką strony
-  if (theme && !theme.paused) { theme.pause(); musicBtn.classList.remove('playing'); }
+  if (theme && !theme.paused) { theme.pause(); musicBtn.classList.remove('playing'); } // nie graj z muzyką strony
   song.play();
   songBtn.classList.add('playing');
 }
-songBtn.addEventListener('click', () => {
-  if (song && !song.paused) stopSong(); else playSong();
-});
+function toggleSong() { if (song && !song.paused) stopSong(); else playSong(); }
+songBtn.addEventListener('click', toggleSong);
+songBtn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSong(); } });
 </script>
 </body>
 </html>
