@@ -81,18 +81,27 @@
   }
   .logo-wrap .game-door:hover { background:radial-gradient(circle, rgba(224,95,208,.32), transparent 70%); }
   .logo-wrap .game-tag {
-    position:absolute; left:72%; top:90%; transform:translateX(-50%);
-    font:800 9.5px/1 'Nunito','Segoe UI',sans-serif; letter-spacing:1.4px;
-    color:var(--violet); pointer-events:none; white-space:nowrap; opacity:0;
-    animation:gameTag 6.5s ease-in-out infinite;
+    position:absolute; left:72%; top:88%; transform:translateX(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:0px;
+    font:800 12px/1 'Nunito','Segoe UI',sans-serif; letter-spacing:1.6px; text-transform:lowercase;
+    color:var(--violet); pointer-events:none; white-space:nowrap;
+    text-shadow:0 1px 2px rgba(242,239,234,.95); /* czytelność nad logo/tłem */
+    animation:gameBreath 2.4s ease-in-out infinite; /* stały „oddech" zamiast migania */
   }
-  @keyframes gameTag {
-    0%,72% { opacity:0; transform:translateX(-50%) translateY(2px); }
-    82%,92% { opacity:.9; transform:translateX(-50%) translateY(0); }
-    100% { opacity:0; transform:translateX(-50%) translateY(2px); }
+  /* pulsująca strzałka NAD napisem — prowadzi wzrok w górę do kulki */
+  .logo-wrap .game-tag::before {
+    content:'▲'; font-size:8.5px; line-height:1; margin-bottom:1px; color:var(--violet);
+    animation:gameArrow 1.3s ease-in-out infinite;
   }
-  .logo-wrap .game-door:hover ~ .game-tag { opacity:.95; animation:none; transform:translateX(-50%); }
-  @media (prefers-reduced-motion:reduce) { .logo-wrap .game-tag { animation:none; opacity:.5; } }
+  @keyframes gameBreath { 0%,100% { opacity:.55; } 50% { opacity:1; } }
+  @keyframes gameArrow  { 0%,100% { transform:translateY(1px);  opacity:.5; }
+                          50%     { transform:translateY(-2px); opacity:1;  } }
+  /* najechanie na kulkę = user znalazł → zatrzymaj animacje, pokaż na pełno */
+  .logo-wrap .game-door:hover ~ .game-tag { opacity:1; animation:none; }
+  .logo-wrap .game-door:hover ~ .game-tag::before { animation:none; transform:translateY(-1px); opacity:1; }
+  @media (prefers-reduced-motion:reduce) {
+    .logo-wrap .game-tag, .logo-wrap .game-tag::before { animation:none; opacity:.7; }
+  }
   header .right { display:flex; gap:26px; align-items:center; font-size:13px; font-weight:700; color:var(--ink-soft); letter-spacing:.5px; }
   header .right span, header .right a { cursor:pointer; color:var(--ink-soft); text-decoration:none; transition:color .15s ease; }
   header .right span:hover, header .right a:hover { color:var(--violet); }
@@ -117,6 +126,8 @@
     header .right { gap:13px; font-size:12px; }
     header .cta-mini { padding:7px 14px; font-size:12px; }
     #musicBtn { font-size:16px; }
+    .logo-wrap .game-tag { font-size:11px; letter-spacing:1.3px; top:90%; }
+    .logo-wrap .game-tag::before { font-size:8px; }
   }
 
   /* ————— HERO — Sansit wbiega zza lewej krawędzi ekranu ————— */
@@ -401,7 +412,7 @@
     <img src="logo/LOGO_header.png" alt="SANSIT">
     <i id="logoPulse"></i>
     <a class="game-door" href="gra/" aria-label="Ukryta gra Sansita" title="psst… zagraj"></a>
-    <span class="game-tag" aria-hidden="true">game</span>
+    <span class="game-tag" data-i18n="gameTag" aria-hidden="true">game</span>
     <span class="logo-tm">™</span>
   </span>
   <div class="right">
@@ -706,7 +717,7 @@ addEventListener('mousemove', e => {
 const I18N = {
   en: {
     navAbout:'About', cta:'Get the book', ctaGhost:'Meet Sansit&nbsp;↓', song:'Sansit Song',
-    freeGift:'Free printable coloring page — download ↓',
+    freeGift:'Free printable coloring page — download ↓', gameTag:'play',
     toast:'🎵 Sansit’s song is coming soon!',
     stripHint:'← swipe through the emotions →',
     heroH1:'Meet Sansit — feelings have colors!',
@@ -733,7 +744,7 @@ const I18N = {
   },
   pl: {
     navAbout:'O Sansicie', cta:'Kup książkę', ctaGhost:'Poznaj Sansita&nbsp;↓', song:'Piosenka Sansita',
-    freeGift:'Darmowa kolorowanka do druku — pobierz ↓',
+    freeGift:'Darmowa kolorowanka do druku — pobierz ↓', gameTag:'graj',
     toast:'🎵 Piosenka Sansita — już wkrótce!',
     stripHint:'← przewiń przez emocje →',
     heroH1:'Poznaj Sansita — emocje mają kolory!',
