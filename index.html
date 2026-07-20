@@ -178,6 +178,9 @@
     cursor:pointer; transition:color .15s ease, border-color .15s ease, transform .15s ease;
   }
   .song-pill:hover { color:var(--violet); border-color:var(--violet); transform:translateY(-1px); }
+  /* stan „gra" — wypełniony violet, ramka pełna (był szkic-dashed) */
+  .song-pill.playing { color:#fff; background:var(--violet); border-style:solid; border-color:var(--violet); }
+  .song-pill.playing:hover { color:#fff; }
 
   /* ZACZEPKA lead-magnet (07-18): mały złoty pasek pod hero → smooth-scroll do #survey.
      Discovery darmowej kolorowanki (ankieta była zakopana na dole). Złoto = „prezent". */
@@ -368,15 +371,6 @@
   }
   footer a.mail:hover { color:var(--violet); border-bottom-color:var(--violet); }
 
-  /* toast „coming soon" (Sansit Song) */
-  #toast {
-    position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(16px);
-    background:#2b2536; color:#F0EFFF; font-weight:700; font-size:14px;
-    padding:12px 22px; border-radius:999px; box-shadow:0 10px 30px rgba(0,0,0,.25);
-    opacity:0; pointer-events:none; transition:opacity .3s ease, transform .3s ease; z-index:60;
-  }
-  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
-
   /* ————— SYGNAŁ SCROLLA (mobile, 07-19) — na małym iPhonie pierwszy kadr nie zdradzał,
      że jest ciąg dalszy. Wariant C: miękka „zasłonka" u dołu (treść wychodzi spod fade =
      „jest więcej") + delikatny chevron z bounce. Oba FIXED (działają niezależnie od
@@ -523,8 +517,6 @@
   <div class="foot-contact"><a class="mail" href="mailto:hi@hellosansit.com">Say hi: hi@hellosansit.com</a></div>
   <div>Sansit™ · made with care by <a class="qg" href="https://qubatura.eu" target="_blank" rel="noopener">Qubatura Group</a></div>
 </footer>
-<div id="toast">🎵 Sansit's song is coming soon!</div>
-
 <script>
 // ————— Sklejka intro → loop —————
 const iv = document.getElementById('introv');
@@ -718,7 +710,6 @@ const I18N = {
   en: {
     navAbout:'About', cta:'Get the book', ctaGhost:'Meet Sansit&nbsp;↓', song:'Sansit Song',
     freeGift:'Free printable coloring page — download ↓', gameTag:'play',
-    toast:'🎵 Sansit’s song is coming soon!',
     stripHint:'← swipe through the emotions →',
     heroH1:'Meet Sansit — feelings have colors!',
     heroP:'An illustrated book to read and color — a little visitor from far away learning what emotions are, exactly like your child.',
@@ -745,7 +736,6 @@ const I18N = {
   pl: {
     navAbout:'O Sansicie', cta:'Kup książkę', ctaGhost:'Poznaj Sansita&nbsp;↓', song:'Piosenka Sansita',
     freeGift:'Darmowa kolorowanka do druku — pobierz ↓', gameTag:'graj',
-    toast:'🎵 Piosenka Sansita — już wkrótce!',
     stripHint:'← przewiń przez emocje →',
     heroH1:'Poznaj Sansita — emocje mają kolory!',
     heroP:'Ilustrowana książka do czytania i kolorowania — mały przybysz z daleka, który dopiero uczy się, czym są emocje, zupełnie jak Twoje dziecko.',
@@ -935,6 +925,9 @@ function setLang(l) {
   document.querySelectorAll('.lang').forEach(el => el.classList.toggle('on', el.dataset.lang === l));
   renderStrip(l);
   svRender();
+  // jeśli piosenka aktualnie gra — przełącz ją na nowy język (DOM, bezpieczne na init/TDZ)
+  const sb = document.getElementById('songBtn');
+  if (sb && sb.classList.contains('playing')) playSong();
 }
 document.querySelectorAll('.lang').forEach(el => el.addEventListener('click', () => setLang(el.dataset.lang)));
 setLang('en');
@@ -944,18 +937,33 @@ const musicBtn = document.getElementById('musicBtn');
 let theme = null;
 musicBtn.addEventListener('click', () => {
   if (!theme) { theme = new Audio('audio/main-theme.mp3'); theme.loop = true; theme.volume = .55; }
-  if (theme.paused) { theme.play(); musicBtn.classList.add('playing'); }
+  if (theme.paused) { stopSong(); theme.play(); musicBtn.classList.add('playing'); }
   else { theme.pause(); musicBtn.classList.remove('playing'); }
 });
 
-// ————— Sansit Song — placeholder do czasu piosenki (OSOBNY utwór, nie main-theme) —————
-const toast = document.getElementById('toast');
-let toastT = null;
-document.getElementById('songBtn').addEventListener('click', () => {
-  toast.textContent = I18N[lang].toast;
-  toast.classList.add('show');
-  clearTimeout(toastT);
-  toastT = setTimeout(() => toast.classList.remove('show'), 2600);
+// ————— Sansit Song — piosenka ZA JĘZYKIEM strony (OSOBNY utwór, lazy) —————
+// Na start: samo play/stop. NIE gra równocześnie z muzyką strony (main-theme).
+// Pełny odtwarzacz (pasek postępu itd.) = temat „to dogadamy" — świadomie NIE tutaj.
+const songBtn = document.getElementById('songBtn');
+let song = null;          // Audio bieżącej piosenki
+let songLang = null;      // język aktualnie wczytanego pliku
+function songSrc(l) { return 'audio/sansit-song-' + l + '.mp3'; }
+function stopSong() { if (song) song.pause(); songBtn.classList.remove('playing'); }
+function playSong() {
+  // wczytaj właściwy język (pierwszy klik albo zmiana języka w trakcie)
+  if (!song || songLang !== lang) {
+    if (song) song.pause();
+    song = new Audio(songSrc(lang));
+    songLang = lang;
+    song.addEventListener('ended', () => songBtn.classList.remove('playing'));
+  }
+  // nie gramy razem z muzyką strony
+  if (theme && !theme.paused) { theme.pause(); musicBtn.classList.remove('playing'); }
+  song.play();
+  songBtn.classList.add('playing');
+}
+songBtn.addEventListener('click', () => {
+  if (song && !song.paused) stopSong(); else playSong();
 });
 </script>
 </body>
