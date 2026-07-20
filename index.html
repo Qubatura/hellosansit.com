@@ -189,9 +189,10 @@
   /* czas do końca — pojawia się dopiero, gdy leci */
   .song-time { font-size:12.5px; font-weight:700; opacity:.7; font-variant-numeric:tabular-nums; }
   .song-time:empty { display:none; }
-  /* pasek postępu — cienka linia u dołu pilla */
-  .song-prog { position:absolute; left:0; bottom:0; height:3px; width:0;
-    background:var(--violet); transition:width .2s linear; pointer-events:none; }
+  /* pasek postępu = całe tło kafelka (klik przewija) — treść na wierzchu */
+  .song-prog { position:absolute; left:0; top:0; bottom:0; width:0;
+    background:rgba(107,47,217,.18); transition:width .12s linear; pointer-events:none; z-index:0; }
+  .song-ic, .song-label, .song-time { position:relative; z-index:1; }
 
   /* ZACZEPKA lead-magnet (07-18): mały złoty pasek pod hero → smooth-scroll do #survey.
      Discovery darmowej kolorowanki (ankieta była zakopana na dole). Złoto = „prezent". */
@@ -959,8 +960,8 @@ musicBtn.addEventListener('click', () => {
 });
 
 // ————— Sansit Song — lekki mini-odtwarzacz ZA JĘZYKIEM strony (OSOBNY utwór, lazy) —————
-// Play/pauza (pozycja utrzymana), czas do końca, pasek postępu. Świadomie BEZ seek/głośności —
-// żeby nie robić z tego pełnego playera. NIE gra równocześnie z muzyką strony (main-theme).
+// Ikona = play/pauza; pasek = całe tło kafelka, klik przewija (seek). Bez głośności — trzymamy lekko.
+// NIE gra równocześnie z muzyką strony (main-theme).
 const songBtn = document.getElementById('songBtn');
 const songTimeEl = songBtn.querySelector('.song-time');
 const songProgEl = songBtn.querySelector('.song-prog');
@@ -993,7 +994,16 @@ function playSong() {
   songBtn.classList.add('playing');
 }
 function toggleSong() { if (song && !song.paused) stopSong(); else playSong(); }
-songBtn.addEventListener('click', toggleSong);
+function seekSong(clientX) {
+  if (!song || !song.duration) return;
+  const r = songBtn.getBoundingClientRect();
+  song.currentTime = Math.min(1, Math.max(0, (clientX - r.left) / r.width)) * song.duration;
+}
+songBtn.addEventListener('click', e => {
+  // ikona = play/pauza; brak utworu = start; reszta kafelka = przewiń (seek)
+  if (!song || e.target.closest('.song-ic')) { toggleSong(); return; }
+  seekSong(e.clientX);
+});
 songBtn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleSong(); } });
 </script>
 </body>
