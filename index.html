@@ -810,8 +810,8 @@ function renderStrip(l) {
 // ————— ANKIETA (lead-magnet) — 3 kliki → kolorowanka PDF. Dane jako bilingual obiekt —————
 // Feedback leci na NASZ serwer (send-sansit.php, honeypot, RODO-clean). Endpoint domknięty
 // przy decyzji o hostingu: same-origin jeśli Sansit na LiteSpeed, albo CORS z Pages.
-const SURVEY_ENDPOINT = 'https://qubatura.eu/send-sansit.php';   // TODO wiring @ hosting
-const PDF_URL = 'book/sansit-coloring.pdf';                       // TODO: PDF z OpenArt (Kuba)
+const SURVEY_ENDPOINT = 'send-sansit.php';   // same-origin na IQ (php obok index.html)
+const PDF_URL = 'book/sansit-coloring.pdf';  // darmowa próbka (1 str.) — łatwo podmienić plik
 const SURVEY = {
   en: {
     kicker:'Free coloring page',
