@@ -57,12 +57,18 @@
   header.scrolled {
     background:linear-gradient(to bottom, rgba(242,239,234,.96) 45%, rgba(242,239,234,0) 100%);
   }
-  .logo-wrap { position:relative; display:block; margin:-10px 0; flex:0 0 auto; }
-  header img { height:62px; display:block; }
+  .logo-wrap { position:relative; display:block; margin:-10px 0; flex:0 0 auto; width:fit-content; }
+  header img { height:var(--logoH); display:block; }
   /* pulsująca poświata na KULCE z logo (kulka jest w PNG, nad „i").
-     Środek kulki zmierzony na LOGO_header.png: x≈72%, y≈26% (07-18). */
+     Środek kulki zmierzony na LOGO_header.png (358×200): x=72,07%, y=26,5%.
+     07-22: „left" w % liczyło się od szerokości .logo-wrap, a ta na mobile nie
+     równała się szerokości obrazka → kulka uciekała w prawo, nad „T". Teraz pozycja
+     idzie od WYSOKOŚCI logo (--logoH, jawna w obu układach) × proporcja PNG 1,79 —
+     czyli od samego obrazka, niezależnie od tego, jak szeroki wyjdzie kontener.
+     Zmiana rozmiaru logo = zmiana samego --logoH, reszta przelicza się sama. */
+  header { --logoH:62px; --logoW:calc(var(--logoH) * 1.79); --ballX:calc(var(--logoW) * .7207); }
   #logoPulse {
-    position:absolute; left:72%; top:26%; width:30%; aspect-ratio:1;
+    position:absolute; left:var(--ballX); top:26.5%; width:calc(var(--logoW) * .30); aspect-ratio:1;
     transform:translate(-50%,-50%); border-radius:50%; pointer-events:none;
     background:radial-gradient(circle, rgba(224,95,208,.64) 0%, rgba(224,95,208,.24) 45%, transparent 72%);
     animation:logoPulse 2.3s ease-in-out infinite;
@@ -75,13 +81,13 @@
   /* ——— ukryte wejście do gry (07-19): kulka z logo = „kamień emocji" = drzwi do gry.
      Wskazówka z klasą: mikro-napis „game" delikatnie POJAWIA SIĘ i ZNIKA przy kulce. ——— */
   .logo-wrap .game-door {
-    position:absolute; left:72%; top:26%; width:40px; height:40px;
+    position:absolute; left:var(--ballX); top:26.5%; width:40px; height:40px;
     transform:translate(-50%,-50%); border-radius:50%; z-index:4; cursor:pointer;
     transition:background .2s ease;
   }
   .logo-wrap .game-door:hover { background:radial-gradient(circle, rgba(224,95,208,.32), transparent 70%); }
   .logo-wrap .game-tag {
-    position:absolute; left:72%; top:88%; transform:translateX(-50%);
+    position:absolute; left:var(--ballX); top:88%; transform:translateX(-50%);
     display:flex; flex-direction:column; align-items:center; gap:0px;
     font:800 12px/1 'Nunito','Segoe UI',sans-serif; letter-spacing:1.6px; text-transform:lowercase;
     color:var(--violet); pointer-events:none; white-space:nowrap;
@@ -119,8 +125,7 @@
      Chowamy „About" (hero ma „Meet Sansit ↓" → #about), zmniejszamy logo i odstępy,
      logo z flex:none nie kurczy się → poświata kulki trzyma pozycję. */
   @media (max-width:600px) {
-    header { padding:11px 15px 15px; }
-    header img { height:48px; }
+    header { padding:11px 15px 15px; --logoH:48px; }   /* --logoW/--ballX przeliczą się same */
     .logo-wrap { margin:-6px 0; }
     header .navlink { display:none; }
     header .right { gap:13px; font-size:12px; }
