@@ -409,6 +409,10 @@
     border-bottom:1px solid transparent; transition:color .15s ease, border-color .15s ease;
   }
   footer a.mail:hover { color:var(--violet); border-bottom-color:var(--violet); }
+  /* 07-22: link do polityki — celowo najcichszy element stopki (obowiązek, nie treść) */
+  footer .foot-legal { margin-top:7px; font-size:12px; }
+  footer .foot-legal a { color:var(--ink-soft); opacity:.75; text-decoration:none; font-weight:700; }
+  footer .foot-legal a:hover { color:var(--violet); opacity:1; text-decoration:underline; }
 
   /* ————— SYGNAŁ SCROLLA (mobile, 07-19) — na małym iPhonie pierwszy kadr nie zdradzał,
      że jest ciąg dalszy. Wariant C: miękka „zasłonka" u dołu (treść wychodzi spod fade =
@@ -561,6 +565,7 @@
 <footer>
   <div class="foot-contact"><a class="mail" href="mailto:hi@hellosansit.com">hi@hellosansit.com</a></div>
   <div>Sansit™ · made with care by <a class="qg" href="https://qubatura.eu" target="_blank" rel="noopener">Qubatura Group</a></div>
+  <div class="foot-legal"><a href="privacy.html" data-i18n="footPrivacy">Privacy</a></div>
 </footer>
 <script>
 // ————— Sklejka intro → loop —————
@@ -754,7 +759,7 @@ addEventListener('mousemove', e => {
 const I18N = {
   en: {
     navAbout:'About', cta:'Get the book', ctaGhost:'Meet Sansit&nbsp;↓', song:'Sansit Song',
-    freeGift:'Free printable coloring page — download ↓', gameTag:'play',
+    freeGift:'Free printable coloring page — download ↓', gameTag:'play', footPrivacy:'Privacy',
     stripHint:'← swipe through the emotions →',
     heroH1:'Meet Sansit — feelings have colors!',
     heroP:'An illustrated book to read and color — a little visitor from far away learning what emotions are, exactly like your child.',
@@ -780,7 +785,7 @@ const I18N = {
   },
   pl: {
     navAbout:'O Sansicie', cta:'Kup książkę', ctaGhost:'Poznaj Sansita&nbsp;↓', song:'Piosenka Sansita',
-    freeGift:'Darmowa kolorowanka do druku — pobierz ↓', gameTag:'graj',
+    freeGift:'Darmowa kolorowanka do druku — pobierz ↓', gameTag:'graj', footPrivacy:'Prywatność',
     stripHint:'← przewiń przez emocje →',
     heroH1:'Poznaj Sansita — emocje mają kolory!',
     heroP:'Ilustrowana książka do czytania i kolorowania — mały przybysz z daleka, który dopiero uczy się, czym są emocje, zupełnie jak Twoje dziecko.',
@@ -923,7 +928,7 @@ function svRender() {
               <input type="email" id="svMail" placeholder="${S.emailPh}" autocomplete="email">
               <label class="sv-consent">
                 <input type="checkbox" id="svConsent">
-                <span>${S.consent}<a href="#" onclick="return false">${S.consentLink}</a></span>
+                <span>${S.consent}<a href="privacy.html?lang=${lang}" target="_blank" rel="noopener">${S.consentLink}</a></span>
               </label>
               <input type="text" class="sv-hp" id="svHp" tabindex="-1" autocomplete="off" aria-hidden="true">
               <button class="sv-save" id="svSave" disabled>${S.save}</button>`}

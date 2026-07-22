@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page not found — Sansit</title>
+<meta name="robots" content="noindex, follow">
+<meta name="theme-color" content="#F4EFE8">
+<link rel="icon" type="image/png" sizes="32x32" href="/logo/favicon_32.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/logo/favicon_512.png">
+<link rel="apple-touch-icon" href="/logo/favicon_180.png">
+<style>
+  /* Uwaga: 404 bywa serwowana spod DOWOLNEGO adresu (np. /gra/cos/tam),
+     więc wszystkie ścieżki muszą być absolutne (od /), inaczej assety się nie załadują. */
+  @font-face {
+    font-family:'Nunito';
+    src:url('/fonts/Nunito-Variable.ttf') format('truetype');
+    font-weight:200 1000; font-display:swap;
+  }
+  :root { --pearl:#F4EFE8; --ink:#3a3630; --ink-soft:#78706a; --violet:#6B2FD9; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    font-family:'Nunito','Segoe UI',sans-serif; background:var(--pearl); color:var(--ink);
+    min-height:100vh; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; text-align:center; padding:32px 22px; gap:4px;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* ciepła poświata za postacią — ten sam zabieg co na stronie głównej */
+  body::before {
+    content:''; position:fixed; z-index:0; width:min(70vw,560px); aspect-ratio:1;
+    border-radius:50%; top:38%; left:50%; transform:translate(-50%,-50%);
+    background:radial-gradient(circle, rgba(224,95,208,.13), transparent 68%);
+    pointer-events:none;
+  }
+  .stage { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; }
+  img.sansit { width:min(46vw,190px); height:auto; display:block; margin-bottom:6px; }
+  .code { font-size:15px; font-weight:900; letter-spacing:3px; color:var(--violet); opacity:.75; }
+  h1 {
+    font-size:clamp(26px,7vw,38px); font-weight:900; letter-spacing:-.6px;
+    margin:8px 0 10px; max-width:15ch; text-wrap:balance;
+  }
+  p { color:var(--ink-soft); font-size:16.5px; max-width:34ch; line-height:1.55; }
+  .btn {
+    margin-top:26px; display:inline-block; background:var(--violet); color:#fff;
+    text-decoration:none; padding:15px 38px; border-radius:999px; font-weight:800; font-size:17px;
+    box-shadow:0 10px 26px rgba(107,47,217,.34); transition:transform .15s;
+  }
+  .btn:hover { transform:translateY(-2px); }
+  .langsw {
+    position:fixed; top:16px; right:18px; z-index:2;
+    font-weight:800; font-size:13px; color:var(--ink-soft); letter-spacing:.5px;
+  }
+  .langsw span { cursor:pointer; padding:2px 4px; }
+  .langsw span.on, .langsw span:hover { color:var(--violet); }
+</style>
+</head>
+<body>
+
+<div class="langsw"><span id="swEn" class="on">EN</span>&nbsp;|&nbsp;<span id="swPl">PL</span></div>
+
+<div class="stage">
+  <img class="sansit" src="/character/sansit_about.webp" alt="Sansit" width="640" height="960">
+  <div class="code">404</div>
+  <h1 id="t404">This page lost its colors</h1>
+  <p id="p404">Sansit looked everywhere and could not find it. Maybe it moved — or maybe the link had a typo.</p>
+  <a class="btn" href="/" id="b404">Back to the site</a>
+</div>
+
+<script>
+// Dziedziczy język ze strony (localStorage 'sansit_lang'), jak gra i polityka.
+var T = {
+  en: { t:'This page lost its colors',
+        p:'Sansit looked everywhere and could not find it. Maybe it moved — or maybe the link had a typo.',
+        b:'Back to the site', title:'Page not found — Sansit' },
+  pl: { t:'Ta strona zgubiła kolory',
+        p:'Sansit wszędzie szukał i jej nie znalazł. Może się przeniosła — a może w linku wkradła się literówka.',
+        b:'Wróć na stronę', title:'Nie znaleziono strony — Sansit' }
+};
+function set404(l){
+  var pl = l === 'pl', t = pl ? T.pl : T.en;
+  document.documentElement.lang = pl ? 'pl' : 'en';
+  document.getElementById('t404').textContent = t.t;
+  document.getElementById('p404').textContent = t.p;
+  document.getElementById('b404').textContent = t.b;
+  document.title = t.title;
+  document.getElementById('swPl').classList.toggle('on', pl);
+  document.getElementById('swEn').classList.toggle('on', !pl);
+  try { localStorage.setItem('sansit_lang', pl ? 'pl' : 'en'); } catch(e){}
+}
+document.getElementById('swPl').onclick = function(){ set404('pl'); };
+document.getElementById('swEn').onclick = function(){ set404('en'); };
+(function(){
+  var l = 'en';
+  try { l = localStorage.getItem('sansit_lang') || 'en'; } catch(e){ l = 'en'; }
+  set404(l === 'pl' ? 'pl' : 'en');
+})();
+</script>
+</body>
+</html>

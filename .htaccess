@@ -1,0 +1,25 @@
+# hellosansit.com — LiteSpeed (serwer IQ)
+# 07-22: jeden kanoniczny adres = APEX (https://hellosansit.com).
+# Wczesniej apex i www dzialaly jako dwa niezalezne wejscia: Google widzial duplikat
+# tresci, a localStorage (wyniki gry, wybor jezyka) nie przenosil sie miedzy nimi.
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # 1) www -> apex (301 = na stale; Google sklei oba adresy w jeden)
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^ https://%1%{REQUEST_URI} [R=301,L]
+
+  # 2) http -> https (HTTPS=on nie zawsze jest ustawione za proxy, stad drugi warunek)
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP:X-Forwarded-Proto} !https
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [R=301,L]
+</IfModule>
+
+# Wlasna strona 404 zamiast golej strony LiteSpeed (Times New Roman na bialym tle).
+ErrorDocument 404 /404.html
+
+# Zaplecze deployu nie ma czego szukac w przegladarce.
+<FilesMatch "^(\.gitignore|\.htaccess|.*\.bak|.*\.iqdefault\..*)$">
+  Require all denied
+</FilesMatch>
