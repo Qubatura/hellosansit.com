@@ -948,7 +948,14 @@ function setLang(l) {
   if (sb && sb.classList.contains('playing')) playSong();
 }
 document.querySelectorAll('.lang').forEach(el => el.addEventListener('click', () => setLang(el.dataset.lang)));
-setLang('en');
+// 07-22: EN pozostaje domyślny (rynek KDP), ale wracając z gry po polsku (?lang=pl)
+// albo po wcześniejszym wyborze PL strona nie przeskakuje z powrotem na angielski.
+(function initLang(){
+  let l = 'en';
+  try { l = new URLSearchParams(location.search).get('lang') || localStorage.getItem('sansit_lang') || 'en'; }
+  catch(e) { l = 'en'; }
+  setLang(l === 'pl' ? 'pl' : 'en');
+})();
 
 // ————— ♪ w headerze = muzyka strony (main-theme, lazy — 2.6 MB ładuje się dopiero po kliknięciu) —————
 const musicBtn = document.getElementById('musicBtn');

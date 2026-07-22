@@ -46,6 +46,10 @@
   .glang { position:absolute; top:16px; right:18px; font-weight:800; font-size:13px; color:var(--ink-soft); letter-spacing:.5px; }
   .glang .gl { cursor:pointer; padding:2px 4px; }
   .glang .gl.on, .glang .gl:hover { color:var(--violet); }
+  /* 07-22: powrót ze startowego ekranu na stronę (zastąpił notkę „wersja testowa”) */
+  .backlink { margin-top:18px; font-size:13.5px; font-weight:800; color:var(--ink-soft);
+    text-decoration:none; opacity:.75; transition:color .15s, opacity .15s; }
+  .backlink:hover { color:var(--violet); opacity:1; }
 
   /* mini-schemat instrukcji */
   .how { display:flex; gap:22px; margin:14px 0 4px; flex-wrap:wrap; justify-content:center; }
@@ -119,7 +123,7 @@
       <button class="btn" data-track="child" data-g="child">👶 Dziecko</button>
       <button class="btn ghost" data-track="adult" data-g="parent">🧑 Rodzic</button>
     </div>
-    <p style="margin-top:16px; font-size:13px; opacity:.7" data-g="note">✨ wersja testowa — Wasz feedback pomoże ją dopieścić</p>
+    <a class="backlink" id="backLink" href="../" data-g="backSite">← Wróć na stronę Sansita</a>
   </div>
 
   <!-- WIN (finał ścieżki) -->
@@ -190,7 +194,7 @@ const G={
   okCap:'wolna droga = odlatuje', noCap:'coś blokuje = zostaje',
   startP2:'Liczy się czas <b>i</b> ruchy — im szybciej i czyściej, tym więcej punktów. Kto gra?',
   child:'👶 Dziecko', parent:'🧑 Rodzic',
-  note:'✨ wersja testowa — Wasz feedback pomoże ją dopieścić',
+  backSite:'← Wróć na stronę Sansita', exitSite:'Wróć na stronę',
   winH:'🌟 Wszystkie emocje uwolnione!', pts:'pkt',
   winP:'Czułki Sansita znów świecą pełnym kolorem.',
   namePh:'Imię (5)', save:'Zapisz', again:'Zagraj jeszcze raz ▸', close:'Zamknij', exit:'Wyjdź',
@@ -205,7 +209,7 @@ const G={
   okCap:'clear path = flies off', noCap:'blocked = stays',
   startP2:'Time <b>and</b> moves count — the faster and cleaner, the more points. Who’s playing?',
   child:'👶 Child', parent:'🧑 Parent',
-  note:'✨ test version — your feedback helps us polish it',
+  backSite:'← Back to the Sansit site', exitSite:'Back to the site',
   winH:'🌟 All emotions set free!', pts:'pts',
   winP:'Sansit’s antennae glow with full color again.',
   namePh:'Name (5)', save:'Save', again:'Play again ▸', close:'Close', exit:'Exit',
@@ -225,6 +229,8 @@ function applyGameLang(l){
   document.querySelectorAll('.gl').forEach(el=>el.classList.toggle('on', el.dataset.gl===l));
   if(sansitCell) document.getElementById('trackName').textContent=(curKey==='child'?T.tChild:T.tParent);
   try{ localStorage.setItem('sansit_lang', l); }catch(e){}
+  const bl=document.getElementById('backLink'); if(bl) bl.href='../?lang='+l;
+  syncExit();   // po data-g-title: ✕ dostaje etykietę zależną od tego, na którym ekranie jesteśmy
 }
 function initGameLang(){
   let l='en';
@@ -437,6 +443,7 @@ function play(key){
   document.getElementById('moveVal').textContent='0';
   document.getElementById('startPanel').classList.add('hidden');
   document.getElementById('winPanel').classList.add('hidden');
+  syncExit();
   loadLevel(0);
 }
 function showWin(ms, mv, points){
@@ -472,19 +479,40 @@ function commitName(){
   nr.style.display='none';
   renderLB(curKey, points);
 }
+// 07-22: ✕ ma dwa kroki — z rozgrywki wraca na ekran startowy, a z ekranu startowego
+// (drugie naciśnięcie) wychodzi na stronę. Wcześniej drugi klik nic nie robił i gra
+// wyglądała, jakby się zawiesiła na przygaszonym panelu.
+function onStart(){ return !document.getElementById('startPanel').classList.contains('hidden'); }
+function backToSite(){
+  // wróć tam, skąd przyszedł (zachowuje pozycję strony); inaczej wejdź na stronę z językiem gry
+  try{
+    if(document.referrer && new URL(document.referrer).origin===location.origin){ history.back(); return; }
+  }catch(e){}
+  location.href='../?lang='+glang;
+}
+function syncExit(){
+  const T=G[glang], b=document.getElementById('exitBtn');
+  b.title = onStart() ? T.exitSite : T.exit;
+  b.setAttribute('aria-label', b.title);
+}
 function quit(){
+  if(onStart()){ backToSite(); return; }   // już na instrukcji → wyjście na stronę
   running=false;
   document.getElementById('winPanel').classList.add('hidden');
   document.getElementById('startPanel').classList.remove('hidden');
   pieces=[]; sansitCell=null; advancing=false;
   document.getElementById('timeVal').textContent='0:00';
   document.getElementById('moveVal').textContent='0';
+  syncExit();
 }
 
 document.querySelectorAll('[data-track]').forEach(b=> b.onclick=()=>play(b.dataset.track));
 document.getElementById('againBtn').onclick=()=>play(curKey);
 document.getElementById('closeBtn').onclick=quit;
 document.getElementById('exitBtn').onclick=quit;
+document.getElementById('backLink').onclick=e=>{ e.preventDefault(); backToSite(); };
+// Esc = to samo co ✕ (ale nie gdy ktoś wpisuje imię na tablicę wyników)
+addEventListener('keydown', e=>{ if(e.key==='Escape' && e.target.tagName!=='INPUT') quit(); });
 document.getElementById('saveName').onclick=commitName;
 document.getElementById('nameInput').addEventListener('keydown',e=>{ if(e.key==='Enter') commitName(); });
 document.querySelectorAll('.gl').forEach(el=> el.onclick=()=>applyGameLang(el.dataset.gl));
