@@ -404,6 +404,10 @@
   @media (prefers-reduced-motion:reduce) { footer a.qg { animation:none; opacity:.85; } }
   /* kontakt (07-19): cicha linijka „gdyby ktoś chciał się odezwać" — nie sekcja, nie formularz */
   footer .foot-contact { margin-bottom:9px; }
+  /* podpis wykonawcy (07.10): ciszej niż metka Qubatury — Sansit zostaje marką */
+  footer .foot-asc { margin-top:6px; font-size:12px; opacity:.8; }
+  footer .foot-asc a { color:inherit; text-decoration:none; border-bottom:1px solid currentColor; }
+  footer .foot-asc a:hover { opacity:1; color:var(--violet); }
   footer a.mail {
     color:var(--ink-soft); text-decoration:none; font-weight:700;
     border-bottom:1px solid transparent; transition:color .15s ease, border-color .15s ease;
@@ -565,6 +569,8 @@
 <footer>
   <div class="foot-contact"><a class="mail" href="mailto:hi@hellosansit.com">hi@hellosansit.com</a></div>
   <div>Sansit™ · made with care by <a class="qg" href="https://qubatura.eu" target="_blank" rel="noopener">Qubatura Group</a></div>
+  <!-- [07.10] podpis wykonawcy strony — link do agencji ASC (widoczność ascagencja.pl w Google i u asystentów AI) -->
+  <div class="foot-asc">website by <a href="https://ascagencja.pl/" target="_blank" rel="noopener">ASC Agencja Systemów Cyfrowych</a></div>
   <div class="foot-legal"><a href="privacy.html" data-i18n="footPrivacy">Privacy</a></div>
 </footer>
 <script>
